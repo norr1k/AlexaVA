@@ -1,0 +1,164 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:iconPacks="https://github.com/MahApps/IconPacks.Avalonia"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        
+        xmlns:vm="clr-namespace:Alexa.ViewModel"
+        xmlns:model="clr-namespace:Alexa.Models"
+        xmlns:conv="clr-namespace:Alexa.Converters"
+        
+        x:Class="Alexa.MainView"
+        Title="Alexa"
+        Icon="/Assets/icon.ico"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="0"
+        x:DataType="vm:MainViewModel">
+
+        <!-- DATA CONTEXT -->
+        <Window.DataContext>
+            <vm:MainViewModel />
+        </Window.DataContext>
+    
+    <!-- CONVERTERS -->
+    <Window.Resources>
+
+        <conv:BoolToAlignmentConverter x:Key="AlignmentConverter"/>
+        <conv:BoolToBrushConverter x:Key="BrushConverter"/>
+        <conv:BoolToRecordingBrushConverter x:Key="RecordingBrushConverter"/>
+
+    </Window.Resources>
+        
+        <!-- ROOT LAYOUT -->
+        <Border Padding="0" Background="{DynamicResource Gray}">
+            <Grid RowDefinitions="48, *, auto">
+                
+                <!-- HEADER -->
+                <Grid Background="{DynamicResource DarkGray}"
+                      ColumnDefinitions="Auto, Auto, *, Auto" 
+                      Name="HeaderGrid" PointerPressed="HeaderGrid_OnPointerPressed">
+                <!-- SETTINGS BUTTON -->
+                    <Button Grid.Column="0" Height="48" VerticalContentAlignment="Center" 
+                        CornerRadius="0" Background="Transparent"
+                        Content="{iconPacks:PhosphorIcons SlidersHorizontalThin}"
+                        Click="SettingsButton_OnClick">
+                    </Button>
+
+
+                <!-- SEARCH BUTTON -->
+                    <Button Grid.Column="1" 
+                            Height="48" 
+                            VerticalContentAlignment="Center" 
+                            CornerRadius="0" 
+                            Background="Transparent" 
+                            Content="{iconPacks:PhosphorIcons MagnifyingGlassThin}"
+                            Command="{Binding ToggleSearchCommand}">
+                    </Button>
+
+                <!-- SEARCH TEXTBOX -->
+                    <TextBox Grid.Column="2" 
+                             BorderBrush="Transparent"
+                             HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
+                             Margin="5"
+                             FontSize="16"
+                             LineHeight="26"
+                             Watermark="Search. . ."
+                             Classes = "AnimatedSearch"
+                             Classes.visible="{Binding IsSearchActive}">
+                    </TextBox>
+                
+            
+                    <!-- USER CONTROLS --> 
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Spacing="0">
+                        <Button Classes="UserControl" Content="{iconPacks:PhosphorIcons MinusThin, Width=16}" Click="Button_OnClick"/>
+                        <Button Classes="UserControl" Content="{iconPacks:PhosphorIcons XThin, Width=14}" Click="CloseButton_OnClick"/> 
+                    </StackPanel>
+                </Grid>
+                
+                <!-- CHAT VIEW -->
+                <ScrollViewer Grid.Row="1"
+                              Background="Transparent">
+                    <ItemsControl ItemsSource="{Binding Messages}">
+
+                        <!-- CHAT MESSAGE TEMPLATE -->
+                        <ItemsControl.ItemTemplate>
+
+                            <DataTemplate x:DataType="model:ChatMessage">
+
+                                <!-- MESSAGE BUBBLE -->
+                                <Border Margin="10"
+                                        Padding="10"
+                                        MaxWidth="350"
+                                        CornerRadius="12"
+                                        PointerPressed="ChatMessage_OnPointerPressed"
+
+                                        HorizontalAlignment="{Binding IsMine, Converter={StaticResource AlignmentConverter}}"
+                                        Background="{Binding IsMine, Converter={StaticResource BrushConverter}}">
+
+                                    <StackPanel>
+
+                                        <!-- MESSAGE -->
+                                        <TextBlock Text="{Binding Text}"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="White"/>
+
+                                        <!-- TIME -->
+                                        <TextBlock Text="{Binding Time, StringFormat='{}{0:HH:mm}'}"
+                                                   HorizontalAlignment="Right"
+                                                   Margin="0,4,0,0"
+                                                   FontSize="11"
+                                                   Opacity="0.7"
+                                                   Foreground="White"/>
+
+                                    </StackPanel>
+
+                                </Border>
+
+                            </DataTemplate>
+
+                        </ItemsControl.ItemTemplate>
+
+                    </ItemsControl>
+                </ScrollViewer>
+                <!-- FOOTER  -->
+                <Grid Grid.Row="2"
+                      
+                      Background="{DynamicResource DarkGray}"
+                      ColumnDefinitions="Auto, *, Auto">
+                    <!-- AttachmentBtn -->
+                    <Button Content="{iconPacks:PhosphorIcons LinkThin, Height=20, Width=20}"
+                            Classes="UIButton Transparent"/>
+                    
+                    <!-- MessageBox -->
+                    <TextBox Grid.Column="1" 
+                             Name="MessageTextBox"
+                             Text="{Binding Message, Mode=TwoWay}"
+                             Classes="MessageBox"
+                             IsEnabled="{Binding IsMessageInputEnabled}"
+                             KeyDown="MessageTextBox_OnKeyDown"
+                             MaxHeight="96"
+                             Watermark="Message. . .">
+                    </TextBox>
+                    
+                    <!-- SendBtn -->
+                    <Button Grid.Column="2" 
+                            Classes="UIButton Transparent"
+                            Command="{Binding SendMessageCommand}">
+                        <!-- Смена иконки -->
+                        <Panel>
+                            <iconPacks:PackIconPhosphorIcons Kind="MicrophoneThin" 
+                                                             Height="20" Width="20" 
+                                                             Foreground="{Binding IsVoiceRecording, Converter={StaticResource RecordingBrushConverter}}"
+                                                             IsVisible="{Binding !HasText}" />
+                            <iconPacks:PackIconPhosphorIcons Kind="CaretRightThin" 
+                                                             Height="20" Width="20" 
+                                                             IsVisible="{Binding HasText}" />
+                        </Panel>
+                    </Button>
+                    
+                </Grid>
+            </Grid>
+        </Border>
+</Window>

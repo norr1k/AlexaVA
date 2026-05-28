@@ -1,0 +1,23 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Alexa.App"
+             RequestedThemeVariant="Dark">
+             <!-- "Default" ThemeVariant follows the system theme variant. "Dark" or "Light" are other available options. -->
+
+    <!-- THEMES AND GLOBAL STYLES -->
+    <Application.Styles>
+        <FluentTheme />
+        <StyleInclude Source="Styles/AppDefaultStyles.axaml" />
+    </Application.Styles>
+             
+    <!-- GLOBAL COLOR RESOURCES -->
+    <Application.Resources>
+        <!-- Base backgrounds -->
+        <SolidColorBrush x:Key="Gray">#2A2A2A</SolidColorBrush>
+        <SolidColorBrush x:Key="DarkGray">#1E1E1E</SolidColorBrush>
+
+        <!-- Active and hover backgrounds -->
+        <SolidColorBrush x:Key="ActiveGray">#3A3A3A</SolidColorBrush>  
+        <SolidColorBrush x:Key="ActiveDarkGray">#191919</SolidColorBrush>
+    </Application.Resources>
+</Application>

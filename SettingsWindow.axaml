@@ -1,0 +1,253 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Alexa.ViewModel"
+        mc:Ignorable="d"
+        d:DesignWidth="760"
+        d:DesignHeight="560"
+        x:Class="Alexa.SettingsWindow"
+        x:DataType="vm:SettingsViewModel"
+        Title="Настройки"
+        Width="760"
+        Height="560"
+        MinWidth="640"
+        MinHeight="480"
+        Background="{DynamicResource Gray}">
+
+    <!-- DATA CONTEXT -->
+    <Window.DataContext>
+        <vm:SettingsViewModel />
+    </Window.DataContext>
+
+    <!-- SETTINGS LAYOUT -->
+    <SplitView IsPaneOpen="True"
+               DisplayMode="Inline"
+               OpenPaneLength="188"
+               CompactPaneLength="56"
+               PaneBackground="{DynamicResource DarkGray}">
+        <SplitView.Pane>
+            <!-- SIDEBAR -->
+            <Border Padding="12">
+                <Grid RowDefinitions="Auto,*">
+                    <!-- SIDEBAR TITLE -->
+                    <TextBlock Text="Настройки"
+                               Margin="8,8,8,20"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="White" />
+
+                    <!-- SETTINGS NAVIGATION -->
+                    <StackPanel Grid.Row="1" Spacing="6">
+                        <Button Classes="SettingsNavButton"
+                                Command="{Binding SelectGeneralSettingsCommand}">
+                            <TextBlock Text="Общие" />
+                        </Button>
+                        <Button Classes="SettingsNavButton"
+                                Command="{Binding SelectAudioSettingsCommand}">
+                            <TextBlock Text="Аудио" />
+                        </Button>
+                        <Button Classes="SettingsNavButton"
+                                Command="{Binding SelectServerSettingsCommand}">
+                            <TextBlock Text="Сервер" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </SplitView.Pane>
+
+        <!-- CONTENT -->
+        <Border Padding="20">
+            <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16">
+                <!-- SELECTED PAGE TITLE -->
+                <TextBlock Text="{Binding SelectedSettingsTitle}"
+                           FontSize="24"
+                           FontWeight="SemiBold"
+                           Foreground="White" />
+
+                <!-- SETTINGS PAGES -->
+                <ScrollViewer Grid.Row="1">
+                    <StackPanel>
+                        <!-- GENERAL SETTINGS PAGE -->
+                        <StackPanel Spacing="18" IsVisible="{Binding IsGeneralSettingsSelected}">
+                            <!-- LAUNCH SETTINGS -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Запуск" Classes="SettingsSectionTitle" />
+                                    <ToggleSwitch Content="Автозапуск приложения"
+                                                  IsChecked="{Binding IsAutostartEnabled}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!-- HOTKEY SETTINGS -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Хоткеи" Classes="SettingsSectionTitle" />
+                                    <ToggleSwitch Content="Использовать горячие клавиши"
+                                                  IsChecked="{Binding HotkeysEnabled}" />
+                                    <!-- HOTKEY BINDINGS -->
+                                    <Grid ColumnDefinitions="240,Auto,*" RowDefinitions="Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                                        <TextBlock Text="Показать окно" Classes="SettingsLabel" />
+                                        <CheckBox Grid.Column="1"
+                                                  IsChecked="{Binding ShowWindowHotkeyEnabled}" />
+                                        <TextBox Name="ShowWindowHotkeyTextBox"
+                                                 Grid.Column="2"
+                                                 Text="{Binding ShowWindowHotkey}"
+                                                 IsReadOnly="True"
+                                                 ContextMenu="{x:Null}"
+                                                 CaretBrush="Transparent"
+                                                 SelectionBrush="Transparent"
+                                                 SelectionForegroundBrush="{DynamicResource TextBoxForeground}"
+                                                 Watermark="Ctrl+Shift+A" />
+
+                                        <TextBlock Grid.Row="1"
+                                                   Text="Запись голосового сообщения"
+                                                   Classes="SettingsLabel" />
+                                        <CheckBox Grid.Row="1"
+                                                 Grid.Column="1"
+                                                  IsChecked="{Binding VoiceRecordHotkeyEnabled}" />
+                                        <TextBox Name="VoiceRecordHotkeyTextBox"
+                                                 Grid.Row="1"
+                                                 Grid.Column="2"
+                                                 Text="{Binding VoiceRecordHotkey}"
+                                                 IsReadOnly="True"
+                                                 ContextMenu="{x:Null}"
+                                                 CaretBrush="Transparent"
+                                                 SelectionBrush="Transparent"
+                                                 SelectionForegroundBrush="{DynamicResource TextBoxForeground}"
+                                                 Watermark="Ctrl+Shift+R" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- LANGUAGE SETTINGS -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Язык" Classes="SettingsSectionTitle" />
+                                    <ComboBox ItemsSource="{Binding Languages}"
+                                              SelectedItem="{Binding SelectedLanguage}"
+                                              HorizontalAlignment="Stretch" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- AUDIO SETTINGS PAGE -->
+                        <StackPanel Spacing="18" IsVisible="{Binding IsAudioSettingsSelected}">
+                            <!-- AUDIO DEVICES -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Устройства" Classes="SettingsSectionTitle" />
+                                    <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                                        <TextBlock Text="Устройство ввода" Classes="SettingsLabel" />
+                                        <ComboBox Grid.Column="1"
+                                                  ItemsSource="{Binding InputDevices}"
+                                                  SelectedItem="{Binding SelectedInputDevice}"
+                                                  HorizontalAlignment="Stretch" />
+
+                                        <TextBlock Grid.Row="1" Text="Устройство вывода" Classes="SettingsLabel" />
+                                        <ComboBox Grid.Row="1"
+                                                  Grid.Column="1"
+                                                  ItemsSource="{Binding OutputDevices}"
+                                                  SelectedItem="{Binding SelectedOutputDevice}"
+                                                  HorizontalAlignment="Stretch" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- MICROPHONE TEST -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Тест микрофона" Classes="SettingsSectionTitle" />
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                        <Button Content="Записать и воспроизвести эхо"
+                                                Command="{Binding StartMicrophoneTestCommand}"
+                                                MinWidth="240" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding MicrophoneTestStatus}"
+                                                   Classes="SettingsLabel"
+                                                   TextWrapping="Wrap"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!-- RECORDING SENSITIVITY -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Чувствительность записи" Classes="SettingsSectionTitle" />
+                                    <Grid ColumnDefinitions="*,64" ColumnSpacing="12">
+                                        <Slider Minimum="0"
+                                                Maximum="100"
+                                                TickFrequency="1"
+                                                Value="{Binding RecordingSensitivity}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding RecordingSensitivity, StringFormat='{}{0:0}%'}"
+                                                   Classes="SettingsValue"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <!-- SERVER SETTINGS PAGE -->
+                        <StackPanel Spacing="18" IsVisible="{Binding IsServerSettingsSelected}">
+                            <!-- SERVER CONNECTION -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Подключение" Classes="SettingsSectionTitle" />
+                                    <Grid ColumnDefinitions="240,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                                        <TextBlock Text="Адрес сервера" Classes="SettingsLabel" />
+                                        <TextBox Grid.Column="1"
+                                                 Text="{Binding ServerAddress}"
+                                                 Watermark="IP или адрес" />
+
+                                        <TextBlock Grid.Row="1" Text="Порт" Classes="SettingsLabel" />
+                                        <TextBox Grid.Row="1"
+                                                 Grid.Column="1"
+                                                 Text="{Binding ServerPort}"
+                                                 Watermark="8000" />
+
+                                        <TextBlock Grid.Row="2" Text="Токен аутентификации" Classes="SettingsLabel" />
+                                        <TextBox Grid.Row="2"
+                                                 Grid.Column="1"
+                                                 Text="{Binding AuthenticationToken}"
+                                                 PasswordChar="*"
+                                                 Watermark="токен" />
+
+                                        <Button Grid.Row="3"
+                                                Grid.Column="1"
+                                                Content="Проверить соединение"
+                                                Command="{Binding CheckServerHealthCommand}"
+                                                HorizontalAlignment="Left" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding ServerHealthStatus}"
+                                               Classes="SettingsLabel"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- FOOTER ACTIONS -->
+                <Grid Grid.Row="2" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+                    <!-- SETTINGS STATUS -->
+                    <TextBlock Text="{Binding SettingsStatus}"
+                               Classes="SettingsLabel"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                    <!-- RESET TO DEFAULTS -->
+                    <Button Grid.Column="1"
+                            Content="По умолчанию"
+                            Command="{Binding ResetSettingsToDefaultCommand}" />
+                    <!-- SAVE SETTINGS -->
+                    <Button Grid.Column="2"
+                            Classes="SaveSettingsButton"
+                            Classes.dirty="{Binding HasUnsavedChanges}"
+                            Content="Сохранить"
+                            Command="{Binding SaveSettingsCommand}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </SplitView>
+</Window>

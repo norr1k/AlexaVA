@@ -1,0 +1,153 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Design.PreviewWith>
+        <Border Padding="0" Background="Gray">
+            <!-- Add Controls for Previewer Here -->
+            <TextBox Classes="MessageBox">X</TextBox>
+        </Border>
+    </Design.PreviewWith>
+    
+    <!-- Add Styles Here -->
+    
+    <!-- Закрыть/минимизировать -->
+    <Style Selector="Button.UserControl">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Width" Value="52" />
+    </Style>
+    
+    
+    <!-- Отправка и вложение -->
+    <Style Selector="Button.UIButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Height" Value="48"/>
+        <Setter Property="Width" Value="48" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Bottom" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0"></Setter>
+    </Style>
+    <!-- Прозрачный фон при наведении -->
+    <Style Selector="Button.Transparent:pointerover /template/ Border#PART_BorderElement"> 
+        <Setter Property="Background" Value="Transparent"/> 
+    </Style>
+    
+    <!-- Для всех TextBox`ов -->
+    <Style Selector="TextBox">
+        <Setter Property="FontSize" Value="16" />
+        <Setter Property="LineHeight" Value="26" />
+    </Style>
+    
+    <!-- Плашко для сообщения -->
+    <Style Selector="TextBox.MessageBox">
+        <Setter Property="Background" Value="{DynamicResource DarkGray}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="AcceptsReturn" Value="True" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <!-- Наведение -->
+    <Style Selector="TextBox.MessageBox:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource DarkGray}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <!-- Фокус -->
+    <Style Selector="TextBox.MessageBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource DarkGray}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>    
+    
+    
+    <!-- Поиск -->
+    <Style Selector="TextBox.AnimatedSearch:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource ActiveDarkGray}"></Setter>
+    </Style>
+    <Style Selector="TextBox.AnimatedSearch:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Background" Value="{DynamicResource ActiveDarkGray}"></Setter>
+    </Style>
+    <Style Selector="TextBox.AnimatedSearch">
+        <Setter Property="Opacity" Value="0"/>
+        <Setter Property="MaxWidth" Value="0"/>
+        <Setter Property="MinWidth" Value="0"/>
+        <Setter Property="IsEnabled" Value="False"/>
+        <Setter Property="Transitions">
+            
+            <Transitions>
+                <!-- Анимируем ширину и прозрачность -->
+                <DoubleTransition Property="MaxWidth" Duration="0:0:1" Easing="CubicEaseOut"/>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.7"/>
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- Состояние при добавлении класса 'visible' -->
+    <Style Selector="TextBox.AnimatedSearch.visible">
+        <Setter Property="Opacity" Value="1"/>
+        <Setter Property="MaxWidth" Value="1000"/>
+        <Setter Property="IsEnabled" Value="True"/>
+    </Style>
+
+    <!-- Карточки секций настроек -->
+    <Style Selector="Border.SettingsSection">
+        <Setter Property="Background" Value="{DynamicResource DarkGray}" />
+        <Setter Property="Padding" Value="16" />
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+
+    <!-- Заголовки секций настроек -->
+    <Style Selector="TextBlock.SettingsSectionTitle">
+        <Setter Property="FontSize" Value="17" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
+    <!-- Подписи полей настроек -->
+    <Style Selector="TextBlock.SettingsLabel">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="#D6D6D6" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+
+    <!-- Значения рядом с полями настроек -->
+    <Style Selector="TextBlock.SettingsValue">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Foreground" Value="#D6D6D6" />
+        <Setter Property="HorizontalAlignment" Value="Right" />
+    </Style>
+
+    <!-- Кнопки навигации в настройках -->
+    <Style Selector="Button.SettingsNavButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Padding" Value="12,10" />
+        <Setter Property="Foreground" Value="#E7E7E7" />
+    </Style>
+
+    <Style Selector="Button.SettingsNavButton:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{DynamicResource ActiveGray}" />
+    </Style>
+
+    <!-- Подсветка кнопки сохранения при несохраненных изменениях -->
+    <Style Selector="Button.SaveSettingsButton.dirty">
+        <Setter Property="Background" Value="#1F8F4D" />
+        <Setter Property="Foreground" Value="White" />
+        <Setter Property="BorderBrush" Value="#2FCB73" />
+    </Style>
+
+    <Style Selector="Button.SaveSettingsButton.dirty:pointerover /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="#26A65B" />
+    </Style>
+    
+</Styles>
+ 
