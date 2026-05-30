@@ -29,6 +29,12 @@ public sealed class AppSettings
     /// <summary>Чувствительность записи в процентах</summary>
     public double RecordingSensitivity { get; set; } = 50;
 
+    /// <summary>Громкость записи в процентах</summary>
+    public double RecordingVolume { get; set; } = 100;
+
+    /// <summary>Громкость воспроизведения в процентах</summary>
+    public double PlaybackVolume { get; set; } = 100;
+
     /// <summary>Адрес сервера</summary>
     public string ServerAddress { get; set; } = string.Empty;
 

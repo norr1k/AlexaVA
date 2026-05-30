@@ -18,7 +18,7 @@
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-        <PackageReference Include="IconPacks.Avalonia.PhosphorIcons" Version="2.0.0" />
+        <PackageReference Include="IconPacks.Avalonia" Version="2.0.0" />
         <PackageReference Include="NAudio" Version="2.3.0" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0-preview.4.26230.115" />
     </ItemGroup>

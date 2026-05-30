@@ -8,6 +8,7 @@
     <Application.Styles>
         <FluentTheme />
         <StyleInclude Source="Styles/AppDefaultStyles.axaml" />
+        <StyleInclude Source="avares://IconPacks.Avalonia/Icons.axaml" />
     </Application.Styles>
              
     <!-- GLOBAL COLOR RESOURCES -->

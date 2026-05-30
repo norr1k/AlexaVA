@@ -171,7 +171,8 @@ public partial class MainViewModel : BaseViewModel
         _voiceRecorder = new VoiceMessageRecorder(
             _currentVoiceFilePath,
             settings.SelectedInputDevice,
-            settings.RecordingSensitivity);
+            settings.RecordingSensitivity,
+            settings.RecordingVolume);
 
         // Поле ввода блокируется через IsVoiceRecording, чтобы пользователь не менял текст во время записи.
         Message = string.Empty;
@@ -286,7 +287,11 @@ public partial class MainViewModel : BaseViewModel
         try
         {
             var settings = AppSettingsStorage.Load();
-            await AudioDeviceService.PlayFileAsync(audioFilePath, settings.SelectedOutputDevice, playbackCts.Token);
+            await AudioDeviceService.PlayFileAsync(
+                audioFilePath,
+                settings.SelectedOutputDevice,
+                settings.PlaybackVolume,
+                playbackCts.Token);
         }
         catch (OperationCanceledException)
         {

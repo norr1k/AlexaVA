@@ -64,18 +64,21 @@ public static class AudioDeviceService
         string? inputDeviceName,
         string? outputDeviceName,
         double sensitivity,
+        double recordingVolume,
+        double playbackVolume,
         CancellationToken cancellationToken = default)
     {
-        await RecordAsync(filePath, inputDeviceName, sensitivity, TimeSpan.FromSeconds(3), cancellationToken);
-        await PlayAsync(filePath, outputDeviceName, cancellationToken);
+        await RecordAsync(filePath, inputDeviceName, sensitivity, recordingVolume, TimeSpan.FromSeconds(3), cancellationToken);
+        await PlayAsync(filePath, outputDeviceName, playbackVolume, cancellationToken);
     }
 
     public static async Task PlayFileAsync(
         string filePath,
         string? outputDeviceName,
+        double playbackVolume,
         CancellationToken cancellationToken = default)
     {
-        await PlayAsync(filePath, outputDeviceName, cancellationToken);
+        await PlayAsync(filePath, outputDeviceName, playbackVolume, cancellationToken);
     }
 
     /// <summary>
@@ -85,6 +88,7 @@ public static class AudioDeviceService
         string filePath,
         string? inputDeviceName,
         double sensitivity,
+        double recordingVolume,
         TimeSpan duration,
         CancellationToken cancellationToken)
     {
@@ -101,7 +105,7 @@ public static class AudioDeviceService
         waveIn.DataAvailable += (_, e) =>
         {
             // NAudio отдает PCM-буфер, поэтому чувствительность применяем до записи в WAV
-            var buffer = ApplySensitivity(e.Buffer, e.BytesRecorded, sensitivity);
+            var buffer = ApplyRecordingGain(e.Buffer, e.BytesRecorded, sensitivity, recordingVolume);
             writer.Write(buffer, 0, buffer.Length);
             writer.Flush();
         };
@@ -136,11 +140,16 @@ public static class AudioDeviceService
     /// <summary>
     /// Воспроизводит WAV-файл
     /// </summary>
-    private static async Task PlayAsync(string filePath, string? outputDeviceName, CancellationToken cancellationToken)
+    private static async Task PlayAsync(
+        string filePath,
+        string? outputDeviceName,
+        double playbackVolume,
+        CancellationToken cancellationToken)
     {
         var playbackFinished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
         using var reader = new AudioFileReader(filePath);
+        reader.Volume = (float)(Math.Clamp(playbackVolume, 0, 100) / 100.0);
         using var outputDevice = FindOutputDevice(outputDeviceName);
         using var waveOut = new WasapiOut(outputDevice, AudioClientShareMode.Shared, false, 100);
 
@@ -213,10 +222,10 @@ public static class AudioDeviceService
     /// <summary>
     /// Применяет чувствительность записи к 16-битному PCM-буферу
     /// </summary>
-    private static byte[] ApplySensitivity(byte[] source, int bytesRecorded, double sensitivity)
+    private static byte[] ApplyRecordingGain(byte[] source, int bytesRecorded, double sensitivity, double recordingVolume)
     {
         // 50% является нейтральным уровнем. Ниже сигнал ослабляется, выше усиливается
-        var multiplier = Math.Clamp(sensitivity, 0, 100) / 50.0;
+        var multiplier = Math.Clamp(sensitivity, 0, 100) / 50.0 * (Math.Clamp(recordingVolume, 0, 100) / 100.0);
         if (Math.Abs(multiplier - 1.0) < 0.001)
             return source.Take(bytesRecorded).ToArray();
 

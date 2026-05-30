@@ -103,6 +103,12 @@ public partial class SettingsViewModel : BaseViewModel
     private double _recordingSensitivity;
 
     [ObservableProperty]
+    private double _recordingVolume;
+
+    [ObservableProperty]
+    private double _playbackVolume;
+
+    [ObservableProperty]
     private string _serverAddress = string.Empty;
 
     [ObservableProperty]
@@ -197,6 +203,8 @@ public partial class SettingsViewModel : BaseViewModel
                 SelectedInputDevice = SelectedInputDevice,
                 SelectedOutputDevice = SelectedOutputDevice,
                 RecordingSensitivity = RecordingSensitivity,
+                RecordingVolume = RecordingVolume,
+                PlaybackVolume = PlaybackVolume,
                 ServerAddress = ServerAddress,
                 ServerPort = ServerPort
             });
@@ -277,7 +285,9 @@ public partial class SettingsViewModel : BaseViewModel
                 tempFile,
                 SelectedInputDevice,
                 SelectedOutputDevice,
-                RecordingSensitivity);
+                RecordingSensitivity,
+                RecordingVolume,
+                PlaybackVolume);
             MicrophoneTestStatus = "Эхо воспроизведено, временный файл удален";
         }
         catch (Exception ex)
@@ -323,6 +333,8 @@ public partial class SettingsViewModel : BaseViewModel
         SelectedInputDevice = SelectStoredOrFirst(InputDevices, settings.SelectedInputDevice);
         SelectedOutputDevice = SelectStoredOrFirst(OutputDevices, settings.SelectedOutputDevice);
         RecordingSensitivity = Math.Clamp(settings.RecordingSensitivity, 0, 100);
+        RecordingVolume = Math.Clamp(settings.RecordingVolume, 0, 100);
+        PlaybackVolume = Math.Clamp(settings.PlaybackVolume, 0, 100);
         ServerAddress = TrimEditableText(settings.ServerAddress);
         ServerPort = TrimEditableText(settings.ServerPort);
     }
@@ -395,6 +407,8 @@ public partial class SettingsViewModel : BaseViewModel
     partial void OnSelectedInputDeviceChanged(string? value) => MarkSettingsChanged();
     partial void OnSelectedOutputDeviceChanged(string? value) => MarkSettingsChanged();
     partial void OnRecordingSensitivityChanged(double value) => MarkSettingsChanged();
+    partial void OnRecordingVolumeChanged(double value) => MarkSettingsChanged();
+    partial void OnPlaybackVolumeChanged(double value) => MarkSettingsChanged();
     partial void OnServerAddressChanged(string value) => MarkSettingsChanged();
     partial void OnServerPortChanged(string value) => MarkSettingsChanged();
     partial void OnAuthenticationTokenChanged(string value) => MarkSettingsChanged();

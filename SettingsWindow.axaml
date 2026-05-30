@@ -154,6 +154,38 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- AUDIO VOLUME -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Громкость" Classes="SettingsSectionTitle" />
+                                    <Grid ColumnDefinitions="240,*,64" RowDefinitions="Auto,Auto" RowSpacing="10" ColumnSpacing="12">
+                                        <TextBlock Text="Громкость записи" Classes="SettingsLabel" />
+                                        <Slider Grid.Column="1"
+                                                Minimum="0"
+                                                Maximum="200"
+                                                TickFrequency="1"
+                                                Value="{Binding RecordingVolume}" />
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding RecordingVolume, StringFormat='{}{0:0}%'}"
+                                                   Classes="SettingsValue"
+                                                   VerticalAlignment="Center" />
+
+                                        <TextBlock Grid.Row="1" Text="Громкость воспроизведения" Classes="SettingsLabel" />
+                                        <Slider Grid.Row="1"
+                                                Grid.Column="1"
+                                                Minimum="0"
+                                                Maximum="200"
+                                                TickFrequency="1"
+                                                Value="{Binding PlaybackVolume}" />
+                                        <TextBlock Grid.Row="1"
+                                                   Grid.Column="2"
+                                                   Text="{Binding PlaybackVolume, StringFormat='{}{0:0}%'}"
+                                                   Classes="SettingsValue"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
                             <!-- MICROPHONE TEST -->
                             <Border Classes="SettingsSection">
                                 <StackPanel Spacing="14">

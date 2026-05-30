@@ -14,6 +14,7 @@ public sealed class VoiceMessageRecorder : IDisposable
     private readonly WaveInEvent _waveIn;
     private readonly WaveFileWriter _writer;
     private readonly double _sensitivity;
+    private readonly double _recordingVolume;
     private bool _isDisposed;
 
     #region Initialization
@@ -21,9 +22,10 @@ public sealed class VoiceMessageRecorder : IDisposable
     /// <summary>
     /// Создает рекордер для записи WAV-файла с выбранного устройства ввода.
     /// </summary>
-    public VoiceMessageRecorder(string filePath, string? inputDeviceName, double sensitivity)
+    public VoiceMessageRecorder(string filePath, string? inputDeviceName, double sensitivity, double recordingVolume)
     {
         _sensitivity = sensitivity;
+        _recordingVolume = recordingVolume;
 
         _waveIn = new WaveInEvent
         {
@@ -85,7 +87,7 @@ public sealed class VoiceMessageRecorder : IDisposable
     /// </summary>
     private void OnDataAvailable(object? sender, WaveInEventArgs e)
     {
-        var buffer = ApplySensitivity(e.Buffer, e.BytesRecorded, _sensitivity);
+        var buffer = ApplyRecordingGain(e.Buffer, e.BytesRecorded, _sensitivity, _recordingVolume);
         _writer.Write(buffer, 0, buffer.Length);
         _writer.Flush();
     }
@@ -125,9 +127,9 @@ public sealed class VoiceMessageRecorder : IDisposable
     /// <summary>
     /// Применяет чувствительность к PCM-буферу
     /// </summary>
-    private static byte[] ApplySensitivity(byte[] source, int bytesRecorded, double sensitivity)
+    private static byte[] ApplyRecordingGain(byte[] source, int bytesRecorded, double sensitivity, double recordingVolume)
     {
-        var multiplier = Math.Clamp(sensitivity, 0, 100) / 50.0;
+        var multiplier = Math.Clamp(sensitivity, 0, 100) / 50.0 * (Math.Clamp(recordingVolume, 0, 100) / 100.0);
         if (Math.Abs(multiplier - 1.0) < 0.001)
             return source.Take(bytesRecorded).ToArray();
 
