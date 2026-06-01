@@ -15,6 +15,7 @@ namespace Alexa;
 public partial class App : Application
 {
     private readonly GlobalHotkeyService _globalHotkeyService = new();
+    private readonly WakeWordService _wakeWordService = new();
     private MainView? _mainView;
     private TrayIcon? _trayIcon;
 
@@ -38,9 +39,13 @@ public partial class App : Application
             // OnExplicitShutdown нужен, чтобы скрытое окно не завершало процесс автоматически.
             desktop.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             _mainView = new MainView();
+            _mainView.VoiceRecordingStateChanged += OnVoiceRecordingStateChanged;
             CreateTrayIcon(desktop);
             ConfigureGlobalHotkeys(AppSettingsStorage.Load());
+            ConfigureWakeWord(AppSettingsStorage.Load());
             AppSettingsStorage.SettingsSaved += ConfigureGlobalHotkeys;
+            AppSettingsStorage.SettingsSaved += ConfigureWakeWord;
+            _wakeWordService.WakeWordDetected += OnWakeWordDetected;
             SettingsWindow.HotkeyCaptureChanged += OnHotkeyCaptureChanged;
         }
 
@@ -66,12 +71,18 @@ public partial class App : Application
         exitItem.Click += async (_, _) =>
         {
             if (_mainView is not null)
+            {
+                _mainView.VoiceRecordingStateChanged -= OnVoiceRecordingStateChanged;
                 await _mainView.ExitApplicationAsync();
+            }
 
             _trayIcon?.Dispose();
             AppSettingsStorage.SettingsSaved -= ConfigureGlobalHotkeys;
+            AppSettingsStorage.SettingsSaved -= ConfigureWakeWord;
+            _wakeWordService.WakeWordDetected -= OnWakeWordDetected;
             SettingsWindow.HotkeyCaptureChanged -= OnHotkeyCaptureChanged;
             _globalHotkeyService.Dispose();
+            _wakeWordService.Dispose();
             desktop.Shutdown();
         };
 
@@ -141,6 +152,33 @@ public partial class App : Application
     private void OnHotkeyCaptureChanged(bool isCapturing)
     {
         _globalHotkeyService.SetSuspended(isCapturing);
+    }
+
+    #endregion
+
+    #region Wake word
+
+    private void ConfigureWakeWord(AppSettings settings)
+    {
+        _wakeWordService.Configure(settings);
+    }
+
+    private void OnWakeWordDetected()
+    {
+        Dispatcher.UIThread.Post(async () =>
+        {
+            if (_mainView is null)
+                return;
+
+            var started = await _mainView.StartVoiceRecordingFromWakeWordAsync();
+            if (!started)
+                _wakeWordService.SetSuspended(false);
+        });
+    }
+
+    private void OnVoiceRecordingStateChanged(bool isVoiceRecording)
+    {
+        _wakeWordService.SetSuspended(isVoiceRecording);
     }
 
     #endregion

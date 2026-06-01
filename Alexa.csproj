@@ -19,6 +19,7 @@
         </PackageReference>
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <PackageReference Include="IconPacks.Avalonia" Version="2.0.0" />
+        <PackageReference Include="NanoWakeWord" Version="1.2.1" />
         <PackageReference Include="NAudio" Version="2.3.0" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="11.0.0-preview.4.26230.115" />
     </ItemGroup>

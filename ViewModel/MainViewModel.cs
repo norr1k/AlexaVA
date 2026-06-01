@@ -29,6 +29,8 @@ public partial class MainViewModel : BaseViewModel
     private VoiceMessageRecorder? _voiceRecorder;
     private string? _currentVoiceFilePath;
 
+    public event Action<bool>? VoiceRecordingStateChanged;
+
     #region Bindable state
 
     [ObservableProperty]
@@ -122,6 +124,23 @@ public partial class MainViewModel : BaseViewModel
 
         Message = string.Empty;
         StartVoiceRecording();
+    }
+
+    public Task<bool> StartVoiceRecordingFromWakeWordAsync()
+    {
+        if (IsVoiceRecording)
+            return Task.FromResult(false);
+
+        try
+        {
+            Message = string.Empty;
+            StartVoiceRecording();
+            return Task.FromResult(true);
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
     }
 
     #endregion
@@ -427,4 +446,6 @@ public partial class MainViewModel : BaseViewModel
     }
 
     #endregion
+
+    partial void OnIsVoiceRecordingChanged(bool value) => VoiceRecordingStateChanged?.Invoke(value);
 }

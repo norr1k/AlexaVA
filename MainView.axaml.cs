@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Alexa.Models;
 using Alexa.ViewModel;
@@ -15,6 +16,8 @@ public partial class MainView : Window
     private SettingsWindow? _settingsWindow;
     private bool _isApplicationExitRequested;
 
+    public event Action<bool>? VoiceRecordingStateChanged;
+
     #region Initialization
 
     /// <summary>
@@ -23,6 +26,9 @@ public partial class MainView : Window
     public MainView()
     {
         InitializeComponent();
+
+        if (DataContext is MainViewModel viewModel)
+            viewModel.VoiceRecordingStateChanged += OnVoiceRecordingStateChanged;
     }
 
     #endregion
@@ -140,6 +146,14 @@ public partial class MainView : Window
             await viewModel.ToggleVoiceRecordingFromHotkeyAsync();
     }
 
+    public async Task<bool> StartVoiceRecordingFromWakeWordAsync()
+    {
+        if (DataContext is MainViewModel viewModel)
+            return await viewModel.StartVoiceRecordingFromWakeWordAsync();
+
+        return false;
+    }
+
     /// <summary>
     /// Выполняет полный выход: чистит временные аудиофайлы и закрывает окно
     /// </summary>
@@ -167,6 +181,11 @@ public partial class MainView : Window
 
         e.Cancel = true;
         Hide();
+    }
+
+    private void OnVoiceRecordingStateChanged(bool isVoiceRecording)
+    {
+        VoiceRecordingStateChanged?.Invoke(isVoiceRecording);
     }
 
     #endregion
