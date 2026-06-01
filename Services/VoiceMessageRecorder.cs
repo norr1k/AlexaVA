@@ -10,22 +10,35 @@ namespace Alexa.Services;
 /// </summary>
 public sealed class VoiceMessageRecorder : IDisposable
 {
+    private const double SilenceRmsThreshold = 0.015;
+
     private readonly TaskCompletionSource _recordingStopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly WaveInEvent _waveIn;
     private readonly WaveFileWriter _writer;
     private readonly double _sensitivity;
     private readonly double _recordingVolume;
+    private readonly TimeSpan _silenceToSendDuration;
+    private TimeSpan _currentSilenceDuration = TimeSpan.Zero;
     private bool _isDisposed;
+    private bool _silenceDetected;
+
+    public event Action? SilenceDetected;
 
     #region Initialization
 
     /// <summary>
     /// Создает рекордер для записи WAV-файла с выбранного устройства ввода.
     /// </summary>
-    public VoiceMessageRecorder(string filePath, string? inputDeviceName, double sensitivity, double recordingVolume)
+    public VoiceMessageRecorder(
+        string filePath,
+        string? inputDeviceName,
+        double sensitivity,
+        double recordingVolume,
+        double silenceToSendSeconds)
     {
         _sensitivity = sensitivity;
         _recordingVolume = recordingVolume;
+        _silenceToSendDuration = TimeSpan.FromSeconds(Math.Clamp(silenceToSendSeconds, 1, 10));
 
         _waveIn = new WaveInEvent
         {
@@ -87,6 +100,8 @@ public sealed class VoiceMessageRecorder : IDisposable
     /// </summary>
     private void OnDataAvailable(object? sender, WaveInEventArgs e)
     {
+        TrackSilence(e.Buffer, e.BytesRecorded);
+
         var buffer = ApplyRecordingGain(e.Buffer, e.BytesRecorded, _sensitivity, _recordingVolume);
         _writer.Write(buffer, 0, buffer.Length);
         _writer.Flush();
@@ -144,6 +159,47 @@ public sealed class VoiceMessageRecorder : IDisposable
         }
 
         return buffer;
+    }
+
+    private void TrackSilence(byte[] source, int bytesRecorded)
+    {
+        if (_silenceDetected)
+            return;
+
+        var rms = CalculateRms(source, bytesRecorded);
+        var bufferDuration = TimeSpan.FromSeconds(bytesRecorded / (double)AudioDeviceService.RecordingFormat.AverageBytesPerSecond);
+
+        if (rms < SilenceRmsThreshold)
+        {
+            _currentSilenceDuration += bufferDuration;
+            if (_currentSilenceDuration >= _silenceToSendDuration)
+            {
+                _silenceDetected = true;
+                SilenceDetected?.Invoke();
+            }
+
+            return;
+        }
+
+        _currentSilenceDuration = TimeSpan.Zero;
+    }
+
+    private static double CalculateRms(byte[] source, int bytesRecorded)
+    {
+        if (bytesRecorded < 2)
+            return 0;
+
+        double sumSquares = 0;
+        var sampleCount = 0;
+
+        for (var i = 0; i + 1 < bytesRecorded; i += 2)
+        {
+            var sample = BitConverter.ToInt16(source, i) / (double)short.MaxValue;
+            sumSquares += sample * sample;
+            sampleCount++;
+        }
+
+        return sampleCount == 0 ? 0 : Math.Sqrt(sumSquares / sampleCount);
     }
 
     #endregion

@@ -186,6 +186,26 @@
                                 </StackPanel>
                             </Border>
 
+                            <!-- SILENCE AUTO SEND -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Автоотправка" Classes="SettingsSectionTitle" />
+                                    <Grid ColumnDefinitions="240,*,64" ColumnSpacing="12">
+                                        <TextBlock Text="Отправлять после тишины" Classes="SettingsLabel" />
+                                        <Slider Grid.Column="1"
+                                                Minimum="1"
+                                                Maximum="10"
+                                                TickFrequency="1"
+                                                IsSnapToTickEnabled="True"
+                                                Value="{Binding SilenceToSendSeconds}" />
+                                        <TextBlock Grid.Column="2"
+                                                   Text="{Binding SilenceToSendSeconds, StringFormat='{}{0:0} с'}"
+                                                   Classes="SettingsValue"
+                                                   VerticalAlignment="Center" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
                             <!-- MICROPHONE TEST -->
                             <Border Classes="SettingsSection">
                                 <StackPanel Spacing="14">

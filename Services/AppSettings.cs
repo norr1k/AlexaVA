@@ -35,6 +35,9 @@ public sealed class AppSettings
     /// <summary>Громкость воспроизведения в процентах</summary>
     public double PlaybackVolume { get; set; } = 100;
 
+    /// <summary>Автоотправка голосового сообщения после тишины в секундах</summary>
+    public double SilenceToSendSeconds { get; set; } = 2;
+
     /// <summary>Адрес сервера</summary>
     public string ServerAddress { get; set; } = string.Empty;
 

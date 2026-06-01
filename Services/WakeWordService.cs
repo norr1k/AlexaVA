@@ -11,7 +11,7 @@ namespace Alexa.Services;
 public sealed class WakeWordService : IDisposable
 {
     private const string WakeWordModel = "alexa_v0.1";
-    private const float WakeWordThreshold = 0.6f;
+    private const float WakeWordThreshold = 0.5f;
     private const int FrameLength = 512;
     private const int WakeWordSampleRate = 16000;
 

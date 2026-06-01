@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Alexa.Models;
 using Alexa.Services;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -28,6 +29,7 @@ public partial class MainViewModel : BaseViewModel
     private string? _playingAudioFilePath;
     private VoiceMessageRecorder? _voiceRecorder;
     private string? _currentVoiceFilePath;
+    private bool _isAutoSendingVoiceRecording;
 
     public event Action<bool>? VoiceRecordingStateChanged;
 
@@ -191,7 +193,9 @@ public partial class MainViewModel : BaseViewModel
             _currentVoiceFilePath,
             settings.SelectedInputDevice,
             settings.RecordingSensitivity,
-            settings.RecordingVolume);
+            settings.RecordingVolume,
+            settings.SilenceToSendSeconds);
+        _voiceRecorder.SilenceDetected += OnVoiceRecorderSilenceDetected;
 
         // Поле ввода блокируется через IsVoiceRecording, чтобы пользователь не менял текст во время записи.
         Message = string.Empty;
@@ -264,6 +268,7 @@ public partial class MainViewModel : BaseViewModel
         }
         finally
         {
+            recorder.SilenceDetected -= OnVoiceRecorderSilenceDetected;
             recorder.Dispose();
 
             // При закрытии во время записи файл еще не отправлен, поэтому удаляем его сразу.
@@ -446,6 +451,25 @@ public partial class MainViewModel : BaseViewModel
     }
 
     #endregion
+
+    private void OnVoiceRecorderSilenceDetected()
+    {
+        Dispatcher.UIThread.Post(async () =>
+        {
+            if (!IsVoiceRecording || _isAutoSendingVoiceRecording)
+                return;
+
+            _isAutoSendingVoiceRecording = true;
+            try
+            {
+                await StopVoiceRecordingAndSendAsync();
+            }
+            finally
+            {
+                _isAutoSendingVoiceRecording = false;
+            }
+        });
+    }
 
     partial void OnIsVoiceRecordingChanged(bool value) => VoiceRecordingStateChanged?.Invoke(value);
 }

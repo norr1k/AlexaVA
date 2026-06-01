@@ -109,6 +109,9 @@ public partial class SettingsViewModel : BaseViewModel
     private double _playbackVolume;
 
     [ObservableProperty]
+    private double _silenceToSendSeconds;
+
+    [ObservableProperty]
     private string _serverAddress = string.Empty;
 
     [ObservableProperty]
@@ -205,6 +208,7 @@ public partial class SettingsViewModel : BaseViewModel
                 RecordingSensitivity = RecordingSensitivity,
                 RecordingVolume = RecordingVolume,
                 PlaybackVolume = PlaybackVolume,
+                SilenceToSendSeconds = SilenceToSendSeconds,
                 ServerAddress = ServerAddress,
                 ServerPort = ServerPort
             });
@@ -335,6 +339,7 @@ public partial class SettingsViewModel : BaseViewModel
         RecordingSensitivity = Math.Clamp(settings.RecordingSensitivity, 0, 100);
         RecordingVolume = Math.Clamp(settings.RecordingVolume, 0, 100);
         PlaybackVolume = Math.Clamp(settings.PlaybackVolume, 0, 100);
+        SilenceToSendSeconds = Math.Clamp(settings.SilenceToSendSeconds, 1, 10);
         ServerAddress = TrimEditableText(settings.ServerAddress);
         ServerPort = TrimEditableText(settings.ServerPort);
     }
@@ -409,6 +414,7 @@ public partial class SettingsViewModel : BaseViewModel
     partial void OnRecordingSensitivityChanged(double value) => MarkSettingsChanged();
     partial void OnRecordingVolumeChanged(double value) => MarkSettingsChanged();
     partial void OnPlaybackVolumeChanged(double value) => MarkSettingsChanged();
+    partial void OnSilenceToSendSecondsChanged(double value) => MarkSettingsChanged();
     partial void OnServerAddressChanged(string value) => MarkSettingsChanged();
     partial void OnServerPortChanged(string value) => MarkSettingsChanged();
     partial void OnAuthenticationTokenChanged(string value) => MarkSettingsChanged();
