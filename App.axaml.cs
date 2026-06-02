@@ -16,8 +16,13 @@ public partial class App : Application
 {
     private readonly GlobalHotkeyService _globalHotkeyService = new();
     private readonly WakeWordService _wakeWordService = new();
+    private readonly ServerConnectionService _serverConnectionService = new();
     private MainView? _mainView;
     private TrayIcon? _trayIcon;
+    private string _serverConnectionStatusText = "Проверка подключения к серверу...";
+    private bool _isServerConnected;
+    private bool _isMicrophoneAvailable = true;
+    private bool _isVoiceRecording;
 
     #region Avalonia lifecycle
 
@@ -41,10 +46,15 @@ public partial class App : Application
             _mainView = new MainView();
             _mainView.VoiceRecordingStateChanged += OnVoiceRecordingStateChanged;
             CreateTrayIcon(desktop);
+            _serverConnectionService.StateChanged += OnServerConnectionStateChanged;
             ConfigureGlobalHotkeys(AppSettingsStorage.Load());
             ConfigureWakeWord(AppSettingsStorage.Load());
+            ConfigureServerConnection(AppSettingsStorage.Load());
+            ConfigureMicrophoneStatus(AppSettingsStorage.Load());
             AppSettingsStorage.SettingsSaved += ConfigureGlobalHotkeys;
             AppSettingsStorage.SettingsSaved += ConfigureWakeWord;
+            AppSettingsStorage.SettingsSaved += ConfigureServerConnection;
+            AppSettingsStorage.SettingsSaved += ConfigureMicrophoneStatus;
             _wakeWordService.WakeWordDetected += OnWakeWordDetected;
             SettingsWindow.HotkeyCaptureChanged += OnHotkeyCaptureChanged;
         }
@@ -79,10 +89,14 @@ public partial class App : Application
             _trayIcon?.Dispose();
             AppSettingsStorage.SettingsSaved -= ConfigureGlobalHotkeys;
             AppSettingsStorage.SettingsSaved -= ConfigureWakeWord;
+            AppSettingsStorage.SettingsSaved -= ConfigureServerConnection;
+            AppSettingsStorage.SettingsSaved -= ConfigureMicrophoneStatus;
+            _serverConnectionService.StateChanged -= OnServerConnectionStateChanged;
             _wakeWordService.WakeWordDetected -= OnWakeWordDetected;
             SettingsWindow.HotkeyCaptureChanged -= OnHotkeyCaptureChanged;
             _globalHotkeyService.Dispose();
             _wakeWordService.Dispose();
+            _serverConnectionService.Dispose();
             desktop.Shutdown();
         };
 
@@ -99,7 +113,7 @@ public partial class App : Application
 
         _trayIcon = new TrayIcon
         {
-            Icon = LoadTrayIcon(),
+            Icon = LoadTrayIcon("error.ico"),
             ToolTipText = "Alexa",
             Menu = menu,
             IsVisible = true
@@ -114,15 +128,67 @@ public partial class App : Application
     /// </summary>
     private static WindowIcon LoadTrayIcon()
     {
-        var iconUri = new Uri("avares://Alexa/Assets/icon.ico");
+        return LoadTrayIcon("icon.ico");
+    }
+
+    /// <summary>
+    /// Загружает .ico-файл из Avalonia resources для отображения в системном трее.
+    /// </summary>
+    private static WindowIcon LoadTrayIcon(string iconName)
+    {
+        var iconUri = new Uri($"avares://Alexa/Assets/{iconName}");
         using var iconStream = AssetLoader.Open(iconUri);
         return new WindowIcon(iconStream);
+    }
+
+    /// <summary>
+    /// Обновляет иконку и tooltip в трее по текущему состоянию приложения.
+    /// </summary>
+    private void UpdateTrayIcon()
+    {
+        if (_trayIcon is null)
+            return;
+
+        var iconName = GetTrayIconName();
+        _trayIcon.Icon = LoadTrayIcon(iconName);
+        _trayIcon.ToolTipText = GetTrayTooltip();
+    }
+
+    /// <summary>
+    /// Выбирает имя tray-иконки по приоритету состояний.
+    /// </summary>
+    private string GetTrayIconName()
+    {
+        if (_isVoiceRecording)
+            return "microphone.ico";
+
+        if (!_isMicrophoneAvailable)
+            return "warning.ico";
+
+        return _isServerConnected ? "correct.ico" : "error.ico";
+    }
+
+    /// <summary>
+    /// Формирует текст tooltip для tray-иконки.
+    /// </summary>
+    private string GetTrayTooltip()
+    {
+        if (_isVoiceRecording)
+            return "Alexa: идет запись голоса";
+
+        if (!_isMicrophoneAvailable)
+            return "Alexa: микрофон недоступен";
+
+        return $"Alexa: {_serverConnectionStatusText}";
     }
 
     #endregion
 
     #region Global hotkeys
 
+    /// <summary>
+    /// Перерегистрирует глобальные горячие клавиши по сохраненным настройкам.
+    /// </summary>
     private void ConfigureGlobalHotkeys(AppSettings settings)
     {
         _globalHotkeyService.HotkeyPressed -= OnGlobalHotkeyPressed;
@@ -130,6 +196,9 @@ public partial class App : Application
         _globalHotkeyService.HotkeyPressed += OnGlobalHotkeyPressed;
     }
 
+    /// <summary>
+    /// Обрабатывает сработавшую глобальную горячую клавишу в UI-потоке приложения.
+    /// </summary>
     private void OnGlobalHotkeyPressed(GlobalHotkeyAction action)
     {
         Dispatcher.UIThread.Post(async () =>
@@ -149,6 +218,9 @@ public partial class App : Application
         });
     }
 
+    /// <summary>
+    /// Временно отключает глобальные хоткеи на время записи новой комбинации в настройках.
+    /// </summary>
     private void OnHotkeyCaptureChanged(bool isCapturing)
     {
         _globalHotkeyService.SetSuspended(isCapturing);
@@ -158,11 +230,17 @@ public partial class App : Application
 
     #region Wake word
 
+    /// <summary>
+    /// Перезапускает прослушивание wake-word с актуальным устройством ввода из настроек.
+    /// </summary>
     private void ConfigureWakeWord(AppSettings settings)
     {
         _wakeWordService.Configure(settings);
     }
 
+    /// <summary>
+    /// Запускает запись голосового сообщения после распознавания wake-word.
+    /// </summary>
     private void OnWakeWordDetected()
     {
         Dispatcher.UIThread.Post(async () =>
@@ -176,9 +254,50 @@ public partial class App : Application
         });
     }
 
+    /// <summary>
+    /// Ставит прослушивание wake-word на паузу во время активной записи голосового сообщения.
+    /// </summary>
     private void OnVoiceRecordingStateChanged(bool isVoiceRecording)
     {
+        _isVoiceRecording = isVoiceRecording;
+        UpdateTrayIcon();
         _wakeWordService.SetSuspended(isVoiceRecording);
+    }
+
+    #endregion
+
+    #region Server connection
+
+    /// <summary>
+    /// Запускает фоновую проверку подключения к серверу с актуальными настройками.
+    /// </summary>
+    private void ConfigureServerConnection(AppSettings settings)
+    {
+        _mainView?.SetServerConnectionStatus("Проверка подключения к серверу...");
+        _serverConnectionService.Start(settings, AuthTokenStorage.Load());
+    }
+
+    /// <summary>
+    /// Обновляет состояние сервера в UI и tray после очередной проверки /api/health.
+    /// </summary>
+    private void OnServerConnectionStateChanged(ServerConnectionSnapshot snapshot)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            _isServerConnected = snapshot.IsConnected;
+            _serverConnectionStatusText = snapshot.Text;
+            _mainView?.SetServerConnectionStatus(snapshot.Text);
+            UpdateTrayIcon();
+        });
+    }
+
+    /// <summary>
+    /// Проверяет доступность выбранного микрофона и обновляет tray-иконку.
+    /// </summary>
+    private void ConfigureMicrophoneStatus(AppSettings settings)
+    {
+        _isMicrophoneAvailable = AudioDeviceService.IsInputDeviceAvailable(settings.SelectedInputDevice);
+        UpdateTrayIcon();
     }
 
     #endregion

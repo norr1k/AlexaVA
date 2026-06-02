@@ -22,6 +22,9 @@ public sealed class VoiceMessageRecorder : IDisposable
     private bool _isDisposed;
     private bool _silenceDetected;
 
+    /// <summary>
+    /// Срабатывает, когда входной сигнал остается ниже порога тишины заданное время.
+    /// </summary>
     public event Action? SilenceDetected;
 
     #region Initialization
@@ -161,6 +164,9 @@ public sealed class VoiceMessageRecorder : IDisposable
         return buffer;
     }
 
+    /// <summary>
+    /// Накапливает длительность тишины по RMS текущего входного буфера.
+    /// </summary>
     private void TrackSilence(byte[] source, int bytesRecorded)
     {
         if (_silenceDetected)
@@ -184,6 +190,9 @@ public sealed class VoiceMessageRecorder : IDisposable
         _currentSilenceDuration = TimeSpan.Zero;
     }
 
+    /// <summary>
+    /// Вычисляет RMS-громкость 16-bit PCM буфера.
+    /// </summary>
     private static double CalculateRms(byte[] source, int bytesRecorded)
     {
         if (bytesRecorded < 2)

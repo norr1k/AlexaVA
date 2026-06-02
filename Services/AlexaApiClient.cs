@@ -78,6 +78,9 @@ public sealed class AlexaApiClient : IDisposable
                ?? new VoiceResponse();
     }
 
+    /// <summary>
+    /// Скачивает аудиофайл по URL из ответа сервера во временный файл приложения.
+    /// </summary>
     public async Task DownloadAudioAsync(
         string audioUrl,
         string destinationPath,
@@ -135,6 +138,9 @@ public sealed class AlexaApiClient : IDisposable
         return builder.Uri;
     }
 
+    /// <summary>
+    /// Преобразует абсолютную или относительную ссылку на аудио в URI для скачивания.
+    /// </summary>
     private Uri BuildAudioUri(string audioUrl)
     {
         if (Uri.TryCreate(audioUrl, UriKind.Absolute, out var absoluteUri))
@@ -165,15 +171,19 @@ public sealed record ChatResponse(
 /// </summary>
 public sealed class VoiceResponse
 {
+    /// <summary>Ссылка на аудиофайл в стандартном snake_case поле.</summary>
     [JsonPropertyName("audio_url")]
     public string? AudioUrl { get; init; }
 
+    /// <summary>Ссылка на аудиофайл в компактном поле без подчеркивания.</summary>
     [JsonPropertyName("audiourl")]
     public string? AudioUrlCompact { get; init; }
 
+    /// <summary>Текстовый ответ сервера.</summary>
     [JsonPropertyName("text")]
     public string? Text { get; init; }
 
+    /// <summary>Возвращает первую доступную ссылку на аудиофайл из поддерживаемых полей ответа.</summary>
     [JsonIgnore]
     public string? EffectiveAudioUrl => string.IsNullOrWhiteSpace(AudioUrl) ? AudioUrlCompact : AudioUrl;
 }

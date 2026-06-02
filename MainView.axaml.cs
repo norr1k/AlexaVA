@@ -59,6 +59,9 @@ public partial class MainView : Window
         WindowState = WindowState.Minimized;
     }
 
+    /// <summary>
+    /// Переключает воспроизведение голосового сообщения при клике по пузырю сообщения.
+    /// </summary>
     private async void ChatMessage_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is not Control { DataContext: ChatMessage message } ||
@@ -140,18 +143,33 @@ public partial class MainView : Window
         Activate();
     }
 
+    /// <summary>
+    /// Переключает запись голосового сообщения из глобальной горячей клавиши.
+    /// </summary>
     public async Task ToggleVoiceRecordingFromHotkeyAsync()
     {
         if (DataContext is MainViewModel viewModel)
             await viewModel.ToggleVoiceRecordingFromHotkeyAsync();
     }
 
+    /// <summary>
+    /// Запускает запись голосового сообщения после срабатывания wake-word.
+    /// </summary>
     public async Task<bool> StartVoiceRecordingFromWakeWordAsync()
     {
         if (DataContext is MainViewModel viewModel)
             return await viewModel.StartVoiceRecordingFromWakeWordAsync();
 
         return false;
+    }
+
+    /// <summary>
+    /// Обновляет текст состояния подключения к серверу в верхней панели окна.
+    /// </summary>
+    public void SetServerConnectionStatus(string statusText)
+    {
+        if (DataContext is MainViewModel viewModel)
+            viewModel.ServerConnectionStatusText = statusText;
     }
 
     /// <summary>
@@ -183,6 +201,9 @@ public partial class MainView : Window
         Hide();
     }
 
+    /// <summary>
+    /// Передает наружу изменение состояния записи для сервисов приложения.
+    /// </summary>
     private void OnVoiceRecordingStateChanged(bool isVoiceRecording)
     {
         VoiceRecordingStateChanged?.Invoke(isVoiceRecording);

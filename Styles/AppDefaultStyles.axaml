@@ -62,39 +62,6 @@
         <Setter Property="Background" Value="{DynamicResource DarkGray}" />
         <Setter Property="BorderThickness" Value="0" />
     </Style>    
-    
-    
-    <!-- Поиск -->
-    <Style Selector="TextBox.AnimatedSearch:focus /template/ Border#PART_BorderElement">
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Background" Value="{DynamicResource ActiveDarkGray}"></Setter>
-    </Style>
-    <Style Selector="TextBox.AnimatedSearch:pointerover /template/ Border#PART_BorderElement">
-        <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="Background" Value="{DynamicResource ActiveDarkGray}"></Setter>
-    </Style>
-    <Style Selector="TextBox.AnimatedSearch">
-        <Setter Property="Opacity" Value="0"/>
-        <Setter Property="MaxWidth" Value="0"/>
-        <Setter Property="MinWidth" Value="0"/>
-        <Setter Property="IsEnabled" Value="False"/>
-        <Setter Property="Transitions">
-            
-            <Transitions>
-                <!-- Анимируем ширину и прозрачность -->
-                <DoubleTransition Property="MaxWidth" Duration="0:0:1" Easing="CubicEaseOut"/>
-                <DoubleTransition Property="Opacity" Duration="0:0:0.7"/>
-            </Transitions>
-        </Setter>
-    </Style>
-
-    <!-- Состояние при добавлении класса 'visible' -->
-    <Style Selector="TextBox.AnimatedSearch.visible">
-        <Setter Property="Opacity" Value="1"/>
-        <Setter Property="MaxWidth" Value="1000"/>
-        <Setter Property="IsEnabled" Value="True"/>
-    </Style>
-
     <!-- Карточки секций настроек -->
     <Style Selector="Border.SettingsSection">
         <Setter Property="Background" Value="{DynamicResource DarkGray}" />

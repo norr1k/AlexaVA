@@ -8,6 +8,9 @@ using NanoWakeWord;
 
 namespace Alexa.Services;
 
+/// <summary>
+/// Слушает микрофон через WASAPI и запускает событие при распознавании wake-word.
+/// </summary>
 public sealed class WakeWordService : IDisposable
 {
     private const string WakeWordModel = "alexa_v0.1";
@@ -29,6 +32,9 @@ public sealed class WakeWordService : IDisposable
 
     public event Action? WakeWordDetected;
 
+    /// <summary>
+    /// Применяет настройки устройства ввода и перезапускает прослушивание при необходимости.
+    /// </summary>
     public void Configure(AppSettings settings)
     {
         lock (_syncRoot)
@@ -39,6 +45,9 @@ public sealed class WakeWordService : IDisposable
         RestartIfAllowed();
     }
 
+    /// <summary>
+    /// Приостанавливает или возобновляет прослушивание wake-word.
+    /// </summary>
     public void SetSuspended(bool isSuspended)
     {
         lock (_syncRoot)
@@ -55,6 +64,9 @@ public sealed class WakeWordService : IDisposable
             RestartIfAllowed();
     }
 
+    /// <summary>
+    /// Останавливает прослушивание и освобождает аудио-ресурсы.
+    /// </summary>
     public void Dispose()
     {
         lock (_syncRoot)
@@ -66,6 +78,9 @@ public sealed class WakeWordService : IDisposable
         StopListening();
     }
 
+    /// <summary>
+    /// Перезапускает listener, если сервис не выключен и не находится в паузе.
+    /// </summary>
     private void RestartIfAllowed()
     {
         lock (_syncRoot)
@@ -78,6 +93,9 @@ public sealed class WakeWordService : IDisposable
         StartListening();
     }
 
+    /// <summary>
+    /// Создает NanoWakeWord runtime и начинает захват аудио с выбранного микрофона.
+    /// </summary>
     private void StartListening()
     {
         lock (_syncRoot)
@@ -116,6 +134,9 @@ public sealed class WakeWordService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Останавливает текущий WASAPI capture; уведомление о wake-word отправляется после полной остановки.
+    /// </summary>
     private void StopListening()
     {
         WasapiCapture? capture;
@@ -142,6 +163,9 @@ public sealed class WakeWordService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Получает очередной буфер WASAPI и передает его в обработку wake-word.
+    /// </summary>
     private void OnDataAvailable(object? sender, WaveInEventArgs e)
     {
         WasapiCapture? capture;
@@ -160,6 +184,9 @@ public sealed class WakeWordService : IDisposable
         ProcessCaptureBuffer(e.Buffer, e.BytesRecorded, capture.WaveFormat);
     }
 
+    /// <summary>
+    /// Преобразует входной буфер в mono samples и понижает частоту до 16 kHz для NanoWakeWord.
+    /// </summary>
     private void ProcessCaptureBuffer(byte[] buffer, int bytesRecorded, WaveFormat waveFormat)
     {
         var bytesPerSample = waveFormat.BitsPerSample / 8;
@@ -183,6 +210,9 @@ public sealed class WakeWordService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Накапливает фрейм фиксированной длины и отправляет его в NanoWakeWord runtime.
+    /// </summary>
     private bool ProcessWakeWordSample(short sample)
     {
         WakeWordRuntime? runtime;
@@ -208,6 +238,9 @@ public sealed class WakeWordService : IDisposable
         return true;
     }
 
+    /// <summary>
+    /// Ставит listener на паузу после детекта и инициирует остановку захвата микрофона.
+    /// </summary>
     private void SuspendAfterDetection()
     {
         lock (_syncRoot)
@@ -222,6 +255,9 @@ public sealed class WakeWordService : IDisposable
         Task.Run(StopListening);
     }
 
+    /// <summary>
+    /// Завершает cleanup после остановки WASAPI capture.
+    /// </summary>
     private void OnRecordingStopped(object? sender, StoppedEventArgs e)
     {
         if (e.Exception is not null)
@@ -230,6 +266,9 @@ public sealed class WakeWordService : IDisposable
         NotifyIfNeeded(CleanupListener());
     }
 
+    /// <summary>
+    /// Отписывает обработчики, освобождает capture/runtime и возвращает признак необходимости уведомить о детекте.
+    /// </summary>
     private bool CleanupListener()
     {
         lock (_syncRoot)
@@ -254,12 +293,18 @@ public sealed class WakeWordService : IDisposable
         }
     }
 
+    /// <summary>
+    /// Отправляет событие распознавания wake-word, если оно было отложено до остановки capture.
+    /// </summary>
     private void NotifyIfNeeded(bool shouldNotify)
     {
         if (shouldNotify)
             WakeWordDetected?.Invoke();
     }
 
+    /// <summary>
+    /// Усредняет каналы входного аудио в один mono sample.
+    /// </summary>
     private static float ReadMonoSample(byte[] buffer, int offset, WaveFormat waveFormat, int bytesPerSample)
     {
         var sample = 0f;
@@ -270,6 +315,9 @@ public sealed class WakeWordService : IDisposable
         return sample / waveFormat.Channels;
     }
 
+    /// <summary>
+    /// Читает один sample из PCM или float WASAPI-буфера и нормализует его в диапазон -1..1.
+    /// </summary>
     private static float ReadSample(byte[] buffer, int offset, WaveFormat waveFormat)
     {
         return waveFormat.Encoding switch
@@ -282,12 +330,18 @@ public sealed class WakeWordService : IDisposable
         };
     }
 
+    /// <summary>
+    /// Читает 24-bit PCM sample с расширением знака до Int32.
+    /// </summary>
     private static int ReadPcm24(byte[] buffer, int offset)
     {
         var value = buffer[offset] | (buffer[offset + 1] << 8) | (buffer[offset + 2] << 16);
         return (value & 0x800000) != 0 ? value | unchecked((int)0xFF000000) : value;
     }
 
+    /// <summary>
+    /// Находит WASAPI-устройство ввода по имени или возвращает системный микрофон по умолчанию.
+    /// </summary>
     private static MMDevice FindInputDevice(string? deviceName)
     {
         var enumerator = new MMDeviceEnumerator();

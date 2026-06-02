@@ -5,12 +5,18 @@ using System.Runtime.InteropServices;
 
 namespace Alexa.Services;
 
+/// <summary>
+/// Действия, которые могут запускаться глобальными горячими клавишами.
+/// </summary>
 public enum GlobalHotkeyAction
 {
     ShowWindow,
     ToggleVoiceRecording
 }
 
+/// <summary>
+/// Регистрирует глобальные хоткеи через low-level keyboard hook Windows.
+/// </summary>
 public sealed class GlobalHotkeyService : IDisposable
 {
     private const int WhKeyboardLl = 13;
@@ -33,11 +39,17 @@ public sealed class GlobalHotkeyService : IDisposable
 
     public event Action<GlobalHotkeyAction>? HotkeyPressed;
 
+    /// <summary>
+    /// Создает сервис и сохраняет делегат callback, чтобы его не собрал GC.
+    /// </summary>
     public GlobalHotkeyService()
     {
         _keyboardProc = KeyboardHookCallback;
     }
 
+    /// <summary>
+    /// Применяет сохраненные настройки хоткеев и запускает или останавливает hook.
+    /// </summary>
     public void Configure(AppSettings settings)
     {
         _hotkeys.Clear();
@@ -61,11 +73,17 @@ public sealed class GlobalHotkeyService : IDisposable
             Start();
     }
 
+    /// <summary>
+    /// Освобождает установленный keyboard hook.
+    /// </summary>
     public void Dispose()
     {
         Stop();
     }
 
+    /// <summary>
+    /// Временно отключает обработку хоткеев без снятия hook.
+    /// </summary>
     public void SetSuspended(bool isSuspended)
     {
         _isSuspended = isSuspended;
@@ -73,12 +91,18 @@ public sealed class GlobalHotkeyService : IDisposable
             _pressedKeys.Clear();
     }
 
+    /// <summary>
+    /// Добавляет хоткей в список отслеживаемых комбинаций, если строка корректно распарсилась.
+    /// </summary>
     private void AddHotkey(string hotkeyText, GlobalHotkeyAction action)
     {
         if (Hotkey.TryParse(hotkeyText, out var hotkey))
             _hotkeys.Add(new RegisteredHotkey(hotkey, action));
     }
 
+    /// <summary>
+    /// Устанавливает системный low-level keyboard hook.
+    /// </summary>
     private void Start()
     {
         if (_hookHandle != 0)
@@ -90,6 +114,9 @@ public sealed class GlobalHotkeyService : IDisposable
         _hookHandle = SetWindowsHookEx(WhKeyboardLl, _keyboardProc, moduleHandle, 0);
     }
 
+    /// <summary>
+    /// Снимает системный keyboard hook, если он был установлен.
+    /// </summary>
     private void Stop()
     {
         if (_hookHandle == 0)
@@ -99,6 +126,9 @@ public sealed class GlobalHotkeyService : IDisposable
         _hookHandle = 0;
     }
 
+    /// <summary>
+    /// Обрабатывает нажатия и отпускания клавиш, сравнивая их с зарегистрированными хоткеями.
+    /// </summary>
     private nint KeyboardHookCallback(int nCode, nint wParam, nint lParam)
     {
         if (nCode < 0)
@@ -136,6 +166,9 @@ public sealed class GlobalHotkeyService : IDisposable
         return CallNextHookEx(_hookHandle, nCode, wParam, lParam);
     }
 
+    /// <summary>
+    /// Возвращает текущий набор нажатых модификаторов по состоянию клавиатуры Windows.
+    /// </summary>
     private static HotkeyModifiers GetCurrentModifiers()
     {
         var modifiers = HotkeyModifiers.None;
@@ -152,20 +185,35 @@ public sealed class GlobalHotkeyService : IDisposable
         return modifiers;
     }
 
+    /// <summary>
+    /// Проверяет, удерживается ли виртуальная клавиша.
+    /// </summary>
     private static bool IsKeyDown(int virtualKey)
     {
         return (GetAsyncKeyState(virtualKey) & 0x8000) != 0;
     }
 
+    /// <summary>
+    /// Связка распарсенного хоткея и действия приложения.
+    /// </summary>
     private sealed record RegisteredHotkey(Hotkey Hotkey, GlobalHotkeyAction Action);
 
+    /// <summary>
+    /// Представляет одну комбинацию горячих клавиш.
+    /// </summary>
     private readonly record struct Hotkey(int VirtualKey, HotkeyModifiers Modifiers)
     {
+        /// <summary>
+        /// Проверяет, совпадает ли текущее нажатие с хоткеем.
+        /// </summary>
         public bool Matches(int virtualKey, HotkeyModifiers modifiers)
         {
             return VirtualKey == virtualKey && Modifiers == modifiers;
         }
 
+        /// <summary>
+        /// Преобразует строку вида Ctrl+Shift+A в внутреннее представление хоткея.
+        /// </summary>
         public static bool TryParse(string text, out Hotkey hotkey)
         {
             hotkey = default;
@@ -211,6 +259,9 @@ public sealed class GlobalHotkeyService : IDisposable
             return true;
         }
 
+        /// <summary>
+        /// Преобразует текст клавиши в virtual-key код Windows.
+        /// </summary>
         private static bool TryParseVirtualKey(string text, out int virtualKey)
         {
             virtualKey = 0;
@@ -302,6 +353,9 @@ public sealed class GlobalHotkeyService : IDisposable
         };
     }
 
+    /// <summary>
+    /// Флаги модификаторов, участвующих в хоткее.
+    /// </summary>
     [Flags]
     private enum HotkeyModifiers
     {
@@ -312,8 +366,14 @@ public sealed class GlobalHotkeyService : IDisposable
         Win = 8
     }
 
+    /// <summary>
+    /// Сигнатура callback для WinAPI keyboard hook.
+    /// </summary>
     private delegate nint LowLevelKeyboardProc(int nCode, nint wParam, nint lParam);
 
+    /// <summary>
+    /// Данные о клавише, передаваемые Windows в low-level keyboard hook.
+    /// </summary>
     [StructLayout(LayoutKind.Sequential)]
     private struct KbdLlHookStruct
     {
@@ -324,19 +384,34 @@ public sealed class GlobalHotkeyService : IDisposable
         public nint ExtraInfo;
     }
 
+    /// <summary>
+    /// Устанавливает low-level keyboard hook через WinAPI.
+    /// </summary>
     [DllImport("user32.dll", SetLastError = true)]
     private static extern nint SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, nint hMod, uint dwThreadId);
 
+    /// <summary>
+    /// Снимает ранее установленный keyboard hook.
+    /// </summary>
     [DllImport("user32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool UnhookWindowsHookEx(nint hhk);
 
+    /// <summary>
+    /// Передает событие клавиатуры следующему обработчику в цепочке hook.
+    /// </summary>
     [DllImport("user32.dll")]
     private static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, nint lParam);
 
+    /// <summary>
+    /// Возвращает текущее состояние виртуальной клавиши.
+    /// </summary>
     [DllImport("user32.dll")]
     private static extern short GetAsyncKeyState(int vKey);
 
+    /// <summary>
+    /// Возвращает handle модуля процесса для установки hook.
+    /// </summary>
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     private static extern nint GetModuleHandle(string lpModuleName);
 }

@@ -28,6 +28,9 @@ public partial class SettingsWindow : Window
         ConfigureHotkeyTextBox(VoiceRecordHotkeyTextBox);
     }
 
+    /// <summary>
+    /// Подключает поле ввода хоткея к обработчикам захвата клавиатуры.
+    /// </summary>
     private void ConfigureHotkeyTextBox(TextBox textBox)
     {
         textBox.GotFocus += HotkeyTextBox_OnGotFocus;
@@ -38,21 +41,33 @@ public partial class SettingsWindow : Window
         textBox.AddHandler(PointerPressedEvent, HotkeyTextBox_OnPointerPressed, RoutingStrategies.Tunnel);
     }
 
+    /// <summary>
+    /// Начинает запись новой комбинации при фокусе на поле хоткея.
+    /// </summary>
     private void HotkeyTextBox_OnGotFocus(object? sender, GotFocusEventArgs e)
     {
         BeginHotkeyCapture(sender as TextBox);
     }
 
+    /// <summary>
+    /// Завершает запись комбинации, когда поле хоткея теряет фокус.
+    /// </summary>
     private void HotkeyTextBox_OnLostFocus(object? sender, RoutedEventArgs e)
     {
         EndHotkeyCapture();
     }
 
+    /// <summary>
+    /// Блокирует обычный текстовый ввод в поле хоткея.
+    /// </summary>
     private void HotkeyTextBox_OnTextInput(object? sender, TextInputEventArgs e)
     {
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Фокусирует поле хоткея и запрещает стандартное выделение текста при клике.
+    /// </summary>
     private void HotkeyTextBox_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (sender is TextBox textBox)
@@ -64,6 +79,9 @@ public partial class SettingsWindow : Window
         e.Handled = true;
     }
 
+    /// <summary>
+    /// Запоминает все нажатые клавиши, пока пользователь записывает хоткей.
+    /// </summary>
     private void HotkeyTextBox_OnKeyDown(object? sender, KeyEventArgs e)
     {
         if (_captureTarget == HotkeyCaptureTarget.None)
@@ -79,6 +97,9 @@ public partial class SettingsWindow : Window
         UpdateCapturedHotkey();
     }
 
+    /// <summary>
+    /// Удаляет отпущенные клавиши из текущей комбинации и завершает захват после отпускания всех клавиш.
+    /// </summary>
     private void HotkeyTextBox_OnKeyUp(object? sender, KeyEventArgs e)
     {
         e.Handled = true;
@@ -114,6 +135,9 @@ public partial class SettingsWindow : Window
             EndHotkeyCapture();
     }
 
+    /// <summary>
+    /// Определяет, какой хоткей редактируется, и временно отключает глобальные хоткеи приложения.
+    /// </summary>
     private void BeginHotkeyCapture(TextBox? textBox)
     {
         _pressedHotkeyKeys.Clear();
@@ -128,6 +152,9 @@ public partial class SettingsWindow : Window
             HotkeyCaptureChanged?.Invoke(true);
     }
 
+    /// <summary>
+    /// Сбрасывает состояние захвата и возвращает глобальные хоткеи в рабочий режим.
+    /// </summary>
     private void EndHotkeyCapture()
     {
         _pressedHotkeyKeys.Clear();
@@ -137,6 +164,9 @@ public partial class SettingsWindow : Window
         _captureTarget = HotkeyCaptureTarget.None;
     }
 
+    /// <summary>
+    /// Записывает отформатированную комбинацию в соответствующее свойство ViewModel.
+    /// </summary>
     private void UpdateCapturedHotkey()
     {
         if (DataContext is not SettingsViewModel viewModel || _captureTarget == HotkeyCaptureTarget.None)
@@ -152,6 +182,9 @@ public partial class SettingsWindow : Window
             viewModel.VoiceRecordHotkey = hotkeyText;
     }
 
+    /// <summary>
+    /// Добавляет модификаторы Ctrl, Shift, Alt и Win к текущей комбинации.
+    /// </summary>
     private void AddModifierKeys(KeyModifiers modifiers)
     {
         if (modifiers.HasFlag(KeyModifiers.Control))
@@ -164,6 +197,9 @@ public partial class SettingsWindow : Window
             _pressedHotkeyKeys.Add(Key.LWin);
     }
 
+    /// <summary>
+    /// Формирует строковое представление хоткея из набора нажатых клавиш.
+    /// </summary>
     private static string FormatHotkey(IReadOnlyCollection<Key> keys)
     {
         var parts = new List<string>();
@@ -185,6 +221,9 @@ public partial class SettingsWindow : Window
         return string.Join("+", parts);
     }
 
+    /// <summary>
+    /// Приводит клавишу к читаемому тексту для отображения в поле хоткея.
+    /// </summary>
     private static string FormatKey(Key key)
     {
         return key switch
@@ -203,11 +242,17 @@ public partial class SettingsWindow : Window
         };
     }
 
+    /// <summary>
+    /// Нормализует системную клавишу Avalonia в конкретный Alt.
+    /// </summary>
     private static Key NormalizeKey(Key key)
     {
         return key == Key.System ? Key.LeftAlt : key;
     }
 
+    /// <summary>
+    /// Проверяет, является ли клавиша модификатором.
+    /// </summary>
     private static bool IsModifierKey(Key key)
     {
         return key is Key.LeftCtrl or Key.RightCtrl or
@@ -216,11 +261,17 @@ public partial class SettingsWindow : Window
             Key.LWin or Key.RWin;
     }
 
+    /// <summary>
+    /// Проверяет, нужно ли игнорировать клавишу при записи хоткея.
+    /// </summary>
     private static bool IsIgnoredKey(Key key)
     {
         return key is Key.None or Key.System;
     }
 
+    /// <summary>
+    /// Проверяет наличие конкретного модификатора в текущем состоянии клавиатуры.
+    /// </summary>
     private static bool HasModifier(KeyModifiers modifiers, KeyModifiers modifier)
     {
         return modifiers.HasFlag(modifier);
@@ -233,6 +284,9 @@ public partial class SettingsWindow : Window
         VoiceRecord
     }
 
+    /// <summary>
+    /// Завершает захват хоткея при закрытии окна настроек.
+    /// </summary>
     protected override void OnClosed(EventArgs e)
     {
         EndHotkeyCapture();

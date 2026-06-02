@@ -31,16 +31,19 @@ public partial class MainViewModel : BaseViewModel
     private string? _currentVoiceFilePath;
     private bool _isAutoSendingVoiceRecording;
 
+    /// <summary>
+    /// Сообщает внешним сервисам, что запись голосового сообщения началась или завершилась.
+    /// </summary>
     public event Action<bool>? VoiceRecordingStateChanged;
 
     #region Bindable state
 
     [ObservableProperty]
-    private bool _isSearchActive;
-
-    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasText))]
     private string _message = string.Empty;
+
+    [ObservableProperty]
+    private string _serverConnectionStatusText = "Проверка подключения к серверу...";
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsMessageInputEnabled))]
@@ -64,15 +67,6 @@ public partial class MainViewModel : BaseViewModel
     #endregion
 
     #region Commands
-
-    /// <summary>
-    /// Переключает видимость строки поиска в верхней панели
-    /// </summary>
-    [RelayCommand]
-    private void ToggleSearch()
-    {
-        IsSearchActive = !IsSearchActive;
-    }
 
     /// <summary>
     /// Обрабатывает основную кнопку отправки: отправляет текст или стартует/останавливает запись голоса
@@ -116,6 +110,9 @@ public partial class MainViewModel : BaseViewModel
         CleanupVoiceTempDirectory();
     }
 
+    /// <summary>
+    /// Переключает запись голосового сообщения при срабатывании глобальной горячей клавиши.
+    /// </summary>
     public async Task ToggleVoiceRecordingFromHotkeyAsync()
     {
         if (IsVoiceRecording)
@@ -128,6 +125,9 @@ public partial class MainViewModel : BaseViewModel
         StartVoiceRecording();
     }
 
+    /// <summary>
+    /// Запускает запись голосового сообщения после wake-word, если запись еще не активна.
+    /// </summary>
     public Task<bool> StartVoiceRecordingFromWakeWordAsync()
     {
         if (IsVoiceRecording)
@@ -281,6 +281,9 @@ public partial class MainViewModel : BaseViewModel
 
     #region Audio playback
 
+    /// <summary>
+    /// Запускает или останавливает воспроизведение аудиофайла голосового сообщения.
+    /// </summary>
     public async Task ToggleMessageAudioPlaybackAsync(ChatMessage message)
     {
         if (!message.IsVoiceMessage ||
@@ -300,6 +303,9 @@ public partial class MainViewModel : BaseViewModel
         await PlayAudioFileAsync(message.AudioFilePath);
     }
 
+    /// <summary>
+    /// Воспроизводит аудиофайл с учетом сохраненного устройства и громкости вывода.
+    /// </summary>
     private async Task PlayAudioFileAsync(string audioFilePath)
     {
         StopAudioPlayback();
@@ -332,6 +338,9 @@ public partial class MainViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Останавливает текущее воспроизведение аудиофайла.
+    /// </summary>
     private void StopAudioPlayback()
     {
         _audioPlaybackCts?.Cancel();
@@ -368,6 +377,9 @@ public partial class MainViewModel : BaseViewModel
         });
     }
 
+    /// <summary>
+    /// Добавляет голосовой ответ сервера в чат и связывает его с локальным аудиофайлом.
+    /// </summary>
     private void AddServerVoiceMessage(string? text, string audioFilePath)
     {
         Messages.Add(new ChatMessage
@@ -411,6 +423,9 @@ public partial class MainViewModel : BaseViewModel
         return audioFilePath;
     }
 
+    /// <summary>
+    /// Определяет расширение временного аудиофайла по URL ответа сервера.
+    /// </summary>
     private static string GetAudioFileExtension(string audioUrl)
     {
         var path = Uri.TryCreate(audioUrl, UriKind.Absolute, out var absoluteUri)
@@ -421,6 +436,9 @@ public partial class MainViewModel : BaseViewModel
         return string.IsNullOrWhiteSpace(extension) ? ".wav" : extension;
     }
 
+    /// <summary>
+    /// Пытается удалить файл, не прерывая пользовательский сценарий при ошибке файловой системы.
+    /// </summary>
     private static void TryDeleteFile(string filePath)
     {
         try
@@ -434,6 +452,9 @@ public partial class MainViewModel : BaseViewModel
         }
     }
 
+    /// <summary>
+    /// Очищает временную папку голосовых сообщений текущего приложения.
+    /// </summary>
     private static void CleanupVoiceTempDirectory()
     {
         try
@@ -452,6 +473,9 @@ public partial class MainViewModel : BaseViewModel
 
     #endregion
 
+    /// <summary>
+    /// Останавливает и отправляет запись, когда рекордер обнаружил заданную длительность тишины.
+    /// </summary>
     private void OnVoiceRecorderSilenceDetected()
     {
         Dispatcher.UIThread.Post(async () =>
@@ -471,5 +495,8 @@ public partial class MainViewModel : BaseViewModel
         });
     }
 
+    /// <summary>
+    /// Пробрасывает изменение состояния записи наружу для wake-word listener.
+    /// </summary>
     partial void OnIsVoiceRecordingChanged(bool value) => VoiceRecordingStateChanged?.Invoke(value);
 }

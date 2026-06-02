@@ -38,6 +38,26 @@ public static class AudioDeviceService
     }
 
     /// <summary>
+    /// Проверяет, доступно ли выбранное устройство ввода или системный микрофон по умолчанию.
+    /// </summary>
+    public static bool IsInputDeviceAvailable(string? inputDeviceName)
+    {
+        if (WaveInEvent.DeviceCount <= 0)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(inputDeviceName))
+            return true;
+
+        for (var i = 0; i < WaveInEvent.DeviceCount; i++)
+        {
+            if (WaveInEvent.GetCapabilities(i).ProductName == inputDeviceName)
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Возвращает список доступных устройств вывода звука
     /// </summary>
     public static IReadOnlyList<string> GetOutputDevices()
@@ -72,6 +92,9 @@ public static class AudioDeviceService
         await PlayAsync(filePath, outputDeviceName, playbackVolume, cancellationToken);
     }
 
+    /// <summary>
+    /// Воспроизводит указанный аудиофайл через выбранное устройство вывода.
+    /// </summary>
     public static async Task PlayFileAsync(
         string filePath,
         string? outputDeviceName,

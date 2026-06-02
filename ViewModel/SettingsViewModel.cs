@@ -195,6 +195,8 @@ public partial class SettingsViewModel : BaseViewModel
             TrimEditableSettings();
             AutostartService.SetEnabled(IsAutostartEnabled);
 
+            AuthTokenStorage.Save(AuthenticationToken);
+
             AppSettingsStorage.Save(new AppSettings
             {
                 ShowWindowHotkey = ShowWindowHotkey,
@@ -213,7 +215,6 @@ public partial class SettingsViewModel : BaseViewModel
                 ServerPort = ServerPort
             });
 
-            AuthTokenStorage.Save(AuthenticationToken);
             HasUnsavedChanges = false;
             SettingsStatus = "Настройки сохранены";
         }
@@ -364,8 +365,9 @@ public partial class SettingsViewModel : BaseViewModel
         }
     }
 
-    
-    // Очищает поля от пробелов и т.п.
+    /// <summary>
+    /// Очищает все редактируемые строковые поля перед сохранением.
+    /// </summary>
     private void TrimEditableSettings()
     {
         ShowWindowHotkey = TrimEditableText(ShowWindowHotkey);
@@ -373,6 +375,9 @@ public partial class SettingsViewModel : BaseViewModel
         TrimServerSettings();
     }
 
+    /// <summary>
+    /// Очищает серверные поля от пробелов и переводов строк по краям.
+    /// </summary>
     private void TrimServerSettings()
     {
         ServerAddress = TrimEditableText(ServerAddress);
@@ -380,6 +385,9 @@ public partial class SettingsViewModel : BaseViewModel
         AuthenticationToken = TrimEditableText(AuthenticationToken);
     }
 
+    /// <summary>
+    /// Возвращает строку без пробелов по краям или пустую строку для null.
+    /// </summary>
     private static string TrimEditableText(string? value)
     {
         return value?.Trim() ?? string.Empty;
@@ -396,6 +404,9 @@ public partial class SettingsViewModel : BaseViewModel
         return values.Count > 0 ? values[0] : null;
     }
 
+    /// <summary>
+    /// Помечает настройки как измененные, если сейчас не выполняется загрузка значений.
+    /// </summary>
     private void MarkSettingsChanged()
     {
         if (!_isApplyingSettings)
