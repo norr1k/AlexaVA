@@ -39,6 +39,9 @@ public partial class App : Application
     /// </summary>
     public override void OnFrameworkInitializationCompleted()
     {
+        AppLogger.Initialize();
+        AppLogger.Info("Application initialization started");
+
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             // OnExplicitShutdown нужен, чтобы скрытое окно не завершало процесс автоматически.
@@ -59,6 +62,7 @@ public partial class App : Application
             SettingsWindow.HotkeyCaptureChanged += OnHotkeyCaptureChanged;
         }
 
+        AppLogger.Info("Application initialization completed");
         base.OnFrameworkInitializationCompleted();
     }
 
@@ -80,6 +84,8 @@ public partial class App : Application
         var exitItem = new NativeMenuItem("Выход");
         exitItem.Click += async (_, _) =>
         {
+            AppLogger.Info("Application exit requested from tray");
+
             if (_mainView is not null)
             {
                 _mainView.VoiceRecordingStateChanged -= OnVoiceRecordingStateChanged;
@@ -201,6 +207,8 @@ public partial class App : Application
     /// </summary>
     private void OnGlobalHotkeyPressed(GlobalHotkeyAction action)
     {
+        AppLogger.Info($"Global hotkey pressed: {action}");
+
         Dispatcher.UIThread.Post(async () =>
         {
             if (_mainView is null)
@@ -235,6 +243,7 @@ public partial class App : Application
     /// </summary>
     private void ConfigureWakeWord(AppSettings settings)
     {
+        AppLogger.Info($"Configuring wake-word listener. InputDevice='{settings.SelectedInputDevice ?? "default"}'");
         _wakeWordService.Configure(settings);
     }
 
@@ -243,6 +252,8 @@ public partial class App : Application
     /// </summary>
     private void OnWakeWordDetected()
     {
+        AppLogger.Info("Wake-word detected");
+
         Dispatcher.UIThread.Post(async () =>
         {
             if (_mainView is null)
@@ -259,6 +270,7 @@ public partial class App : Application
     /// </summary>
     private void OnVoiceRecordingStateChanged(bool isVoiceRecording)
     {
+        AppLogger.Info($"Voice recording state changed: {isVoiceRecording}");
         _isVoiceRecording = isVoiceRecording;
         UpdateTrayIcon();
         _wakeWordService.SetSuspended(isVoiceRecording);
@@ -273,6 +285,7 @@ public partial class App : Application
     /// </summary>
     private void ConfigureServerConnection(AppSettings settings)
     {
+        AppLogger.Info("Configuring server connection monitor");
         _mainView?.SetServerConnectionStatus("Проверка подключения к серверу...");
         _serverConnectionService.Start(settings, AuthTokenStorage.Load());
     }
@@ -297,6 +310,7 @@ public partial class App : Application
     private void ConfigureMicrophoneStatus(AppSettings settings)
     {
         _isMicrophoneAvailable = AudioDeviceService.IsInputDeviceAvailable(settings.SelectedInputDevice);
+        AppLogger.Info($"Microphone status checked. Available={_isMicrophoneAvailable}; InputDevice='{settings.SelectedInputDevice ?? "default"}'");
         UpdateTrayIcon();
     }
 

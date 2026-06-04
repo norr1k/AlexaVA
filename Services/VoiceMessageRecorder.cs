@@ -64,6 +64,7 @@ public sealed class VoiceMessageRecorder : IDisposable
     /// </summary>
     public void Start()
     {
+        AppLogger.Info("Voice recorder started");
         _waveIn.StartRecording();
     }
 
@@ -75,6 +76,7 @@ public sealed class VoiceMessageRecorder : IDisposable
         if (_isDisposed)
             return;
 
+        AppLogger.Info("Voice recorder stopping");
         _waveIn.StopRecording();
         await _recordingStopped.Task;
     }
@@ -88,6 +90,7 @@ public sealed class VoiceMessageRecorder : IDisposable
             return;
 
         _isDisposed = true;
+        AppLogger.Info("Voice recorder disposed");
         _waveIn.DataAvailable -= OnDataAvailable;
         _waveIn.RecordingStopped -= OnRecordingStopped;
         _writer.Dispose();
@@ -181,6 +184,7 @@ public sealed class VoiceMessageRecorder : IDisposable
             if (_currentSilenceDuration >= _silenceToSendDuration)
             {
                 _silenceDetected = true;
+                AppLogger.Info($"Voice recorder silence threshold reached. Duration={_silenceToSendDuration.TotalSeconds:0}s; Rms={rms:0.0000}");
                 SilenceDetected?.Invoke();
             }
 

@@ -15,9 +15,7 @@ public static class AuthTokenStorage
     /// <summary>
     /// Возвращает каталог настроек приложения
     /// </summary>
-    private static string SettingsDirectory => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Alexa");
+    private static string SettingsDirectory => AppPaths.SettingsDirectory;
 
     /// <summary>
     /// Возвращает путь к DPAPI-файлу токена

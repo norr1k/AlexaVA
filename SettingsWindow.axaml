@@ -129,6 +129,16 @@
                                               HorizontalAlignment="Stretch" />
                                 </StackPanel>
                             </Border>
+
+                            <!-- LOGS SETTINGS -->
+                            <Border Classes="SettingsSection">
+                                <StackPanel Spacing="14">
+                                    <TextBlock Text="Логи" Classes="SettingsSectionTitle" />
+                                    <Button Content="Открыть папку с логами"
+                                            Command="{Binding OpenLogsFolderCommand}"
+                                            HorizontalAlignment="Left" />
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
 
                         <!-- AUDIO SETTINGS PAGE -->

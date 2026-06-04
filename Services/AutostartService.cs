@@ -9,7 +9,8 @@ namespace Alexa.Services;
 /// </summary>
 public static class AutostartService
 {
-    private const string AppName = "Alexa";
+    private const string AppName = "AlexaVA";
+    private const string LegacyAppName = "Alexa";
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
     /// <summary>
@@ -21,7 +22,7 @@ public static class AutostartService
             return false;
 
         using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, false);
-        return key?.GetValue(AppName) is string;
+        return key?.GetValue(AppName) is string || key?.GetValue(LegacyAppName) is string;
     }
 
     /// <summary>
@@ -35,6 +36,8 @@ public static class AutostartService
         using var key = Registry.CurrentUser.OpenSubKey(RunKeyPath, true);
         if (key is null)
             return;
+
+        key.DeleteValue(LegacyAppName, false);
 
         if (!enabled)
         {

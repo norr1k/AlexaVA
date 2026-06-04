@@ -120,14 +120,17 @@ public sealed class WakeWordService : IDisposable
                     ]
                 });
 
-                _capture = new WasapiCapture(FindInputDevice(_inputDeviceName));
+                var inputDevice = FindInputDevice(_inputDeviceName);
+                _capture = new WasapiCapture(inputDevice);
                 _capture.DataAvailable += OnDataAvailable;
                 _capture.RecordingStopped += OnRecordingStopped;
                 _capture.StartRecording();
                 _isListening = true;
+                AppLogger.Info($"Wake-word listener started. Model='{WakeWordModel}'; Threshold={WakeWordThreshold}; InputDevice='{inputDevice.FriendlyName}'");
             }
             catch (Exception ex)
             {
+                AppLogger.Error(ex, "Wake-word listener failed to start");
                 Debug.WriteLine($"Wake-word listener failed to start: {ex}");
                 CleanupListener();
             }
@@ -158,6 +161,7 @@ public sealed class WakeWordService : IDisposable
         }
         catch (Exception ex)
         {
+            AppLogger.Error(ex, "Wake-word listener failed to stop");
             Debug.WriteLine($"Wake-word listener failed to stop: {ex}");
             NotifyIfNeeded(CleanupListener());
         }
@@ -234,6 +238,7 @@ public sealed class WakeWordService : IDisposable
         if (runtime.Process(_frame) < 0)
             return false;
 
+        AppLogger.Info("Wake-word detected by runtime");
         SuspendAfterDetection();
         return true;
     }
@@ -261,7 +266,10 @@ public sealed class WakeWordService : IDisposable
     private void OnRecordingStopped(object? sender, StoppedEventArgs e)
     {
         if (e.Exception is not null)
+        {
+            AppLogger.Error(e.Exception, "Wake-word listener stopped with error");
             Debug.WriteLine($"Wake-word listener stopped with error: {e.Exception}");
+        }
 
         NotifyIfNeeded(CleanupListener());
     }
@@ -286,6 +294,7 @@ public sealed class WakeWordService : IDisposable
             _frameOffset = 0;
             _resampleAccumulator = 0;
             _isListening = false;
+            AppLogger.Info("Wake-word listener resources cleaned up");
 
             var shouldNotify = _notifyAfterStop && !_isDisposed;
             _notifyAfterStop = false;

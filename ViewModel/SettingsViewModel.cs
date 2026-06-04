@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Alexa.Services;
@@ -241,6 +242,30 @@ public partial class SettingsViewModel : BaseViewModel
         SettingsStatus = "Возвращены значения по умолчанию. Нажмите \"Сохранить\", чтобы применить";
     }
 
+    /// <summary>
+    /// Открывает папку с log-файлами приложения.
+    /// </summary>
+    [RelayCommand]
+    private void OpenLogsFolder()
+    {
+        try
+        {
+            Directory.CreateDirectory(AppPaths.LogsDirectory);
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = AppPaths.LogsDirectory,
+                UseShellExecute = true
+            });
+
+            AppLogger.Info("Logs folder opened from settings");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(ex, "Failed to open logs folder");
+            SettingsStatus = $"Не удалось открыть папку с логами: {ex.Message}";
+        }
+    }
+
     #endregion
 
     #region Server checks
@@ -275,10 +300,7 @@ public partial class SettingsViewModel : BaseViewModel
     [RelayCommand]
     private async Task StartMicrophoneTest()
     {
-        var tempDirectory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "Temp",
-            "Alexa");
+        var tempDirectory = AppPaths.TempDirectory;
         Directory.CreateDirectory(tempDirectory);
 
         var tempFile = Path.Combine(tempDirectory, $"microphone-test-{Guid.NewGuid():N}.wav");

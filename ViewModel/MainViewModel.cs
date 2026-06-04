@@ -18,10 +18,7 @@ namespace Alexa.ViewModel;
 /// </summary>
 public partial class MainViewModel : BaseViewModel
 {
-    private static readonly string VoiceTempDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Temp",
-        "Alexa");
+    private static readonly string VoiceTempDirectory = AppPaths.TempDirectory;
 
     private readonly Collection<string> _sessionAudioFiles = new();
     private readonly string _sessionId = Guid.NewGuid().ToString("N");
@@ -156,6 +153,7 @@ public partial class MainViewModel : BaseViewModel
     {
         var userText = Message.Trim();
         Message = string.Empty;
+        AppLogger.Info($"Sending text message. Length={userText.Length}; SessionId={_sessionId}");
 
         Messages.Add(new ChatMessage
         {
@@ -168,10 +166,12 @@ public partial class MainViewModel : BaseViewModel
         {
             using var apiClient = CreateApiClient();
             var response = await apiClient.SendChatAsync(userText, _sessionId);
+            AppLogger.Info("Text message sent successfully");
             AddServerMessage(response.Text, response.Attachments);
         }
         catch (Exception ex)
         {
+            AppLogger.Error(ex, "Failed to send text message");
             AddServerMessage($"Ошибка отправки сообщения: {ex.Message}");
         }
     }
@@ -187,6 +187,7 @@ public partial class MainViewModel : BaseViewModel
     {
         var settings = AppSettingsStorage.Load();
         Directory.CreateDirectory(VoiceTempDirectory);
+        AppLogger.Info($"Starting voice recording. TempDirectory='{VoiceTempDirectory}'");
 
         _currentVoiceFilePath = Path.Combine(VoiceTempDirectory, $"voice-message-{Guid.NewGuid():N}.wav");
         _voiceRecorder = new VoiceMessageRecorder(
@@ -209,12 +210,17 @@ public partial class MainViewModel : BaseViewModel
     private async Task StopVoiceRecordingAndSendAsync()
     {
         var filePath = _currentVoiceFilePath;
+        AppLogger.Info("Stopping voice recording for sending");
         await StopCurrentRecordingAsync(deleteRecordedFile: false);
 
         if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
+        {
+            AppLogger.Warning("Voice recording file is missing after stop");
             return;
+        }
 
         _sessionAudioFiles.Add(filePath);
+        AppLogger.Info($"Sending voice message. FileSize={new FileInfo(filePath).Length} bytes");
         Messages.Add(new ChatMessage
         {
             Text = "Голосовое сообщение",
@@ -228,6 +234,7 @@ public partial class MainViewModel : BaseViewModel
         {
             using var apiClient = CreateApiClient();
             var response = await apiClient.SendVoiceAsync(filePath);
+            AppLogger.Info("Voice message sent successfully");
             TryDeleteFile(filePath);
             _sessionAudioFiles.Remove(filePath);
             var serverAudioFilePath = await DownloadVoiceResponseAudioAsync(apiClient, response);
@@ -243,6 +250,7 @@ public partial class MainViewModel : BaseViewModel
         }
         catch (Exception ex)
         {
+            AppLogger.Error(ex, "Failed to send voice message");
             AddServerMessage($"Ошибка отправки голосового сообщения: {ex.Message}");
         }
     }
@@ -265,6 +273,7 @@ public partial class MainViewModel : BaseViewModel
         try
         {
             await recorder.StopAsync();
+            AppLogger.Info("Voice recorder stopped");
         }
         finally
         {
@@ -317,6 +326,7 @@ public partial class MainViewModel : BaseViewModel
         try
         {
             var settings = AppSettingsStorage.Load();
+            AppLogger.Info($"Playing audio file. OutputDevice='{settings.SelectedOutputDevice ?? "default"}'");
             await AudioDeviceService.PlayFileAsync(
                 audioFilePath,
                 settings.SelectedOutputDevice,
@@ -325,6 +335,11 @@ public partial class MainViewModel : BaseViewModel
         }
         catch (OperationCanceledException)
         {
+            AppLogger.Info("Audio playback cancelled");
+        }
+        catch (Exception ex)
+        {
+            AppLogger.Error(ex, "Audio playback failed");
         }
         finally
         {
@@ -420,6 +435,7 @@ public partial class MainViewModel : BaseViewModel
             $"voice-response-{Guid.NewGuid():N}{GetAudioFileExtension(response.EffectiveAudioUrl)}");
 
         await apiClient.DownloadAudioAsync(response.EffectiveAudioUrl, audioFilePath);
+        AppLogger.Info($"Downloaded server voice response audio. FileSize={new FileInfo(audioFilePath).Length} bytes");
         return audioFilePath;
     }
 
@@ -444,10 +460,14 @@ public partial class MainViewModel : BaseViewModel
         try
         {
             if (File.Exists(filePath))
+            {
                 File.Delete(filePath);
+                AppLogger.Info($"Deleted temp file '{Path.GetFileName(filePath)}'");
+            }
         }
-        catch
+        catch (Exception ex)
         {
+            AppLogger.Error(ex, $"Failed to delete temp file '{Path.GetFileName(filePath)}'");
             // Очистка сессии не должна блокировать закрытие приложения.
         }
     }
@@ -465,8 +485,9 @@ public partial class MainViewModel : BaseViewModel
             foreach (var filePath in Directory.EnumerateFiles(VoiceTempDirectory))
                 TryDeleteFile(filePath);
         }
-        catch
+        catch (Exception ex)
         {
+            AppLogger.Error(ex, "Failed to cleanup voice temp directory");
             // Cleanup should not block application shutdown.
         }
     }
@@ -483,6 +504,7 @@ public partial class MainViewModel : BaseViewModel
             if (!IsVoiceRecording || _isAutoSendingVoiceRecording)
                 return;
 
+            AppLogger.Info("Silence detected, auto-sending voice recording");
             _isAutoSendingVoiceRecording = true;
             try
             {

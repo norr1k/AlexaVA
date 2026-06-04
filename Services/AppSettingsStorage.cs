@@ -19,9 +19,7 @@ public static class AppSettingsStorage
     /// <summary>
     /// Возвращает каталог настроек
     /// </summary>
-    private static string SettingsDirectory => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "Alexa");
+    private static string SettingsDirectory => AppPaths.SettingsDirectory;
 
     /// <summary>
     /// Возвращает путь к файлу настроек
@@ -60,6 +58,7 @@ public static class AppSettingsStorage
 
         var json = JsonSerializer.Serialize(settings, JsonOptions);
         File.WriteAllText(SettingsPath, json);
+        AppLogger.Info($"Settings saved to '{SettingsPath}'");
         SettingsSaved?.Invoke(settings);
     }
 }

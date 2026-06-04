@@ -14,6 +14,8 @@ public sealed class ServerConnectionService : IDisposable
     private static readonly TimeSpan MaxReconnectDelay = TimeSpan.FromSeconds(30);
 
     private CancellationTokenSource? _connectionCts;
+    private ServerConnectionState? _lastPublishedState;
+    private string? _lastPublishedText;
 
     public event Action<ServerConnectionSnapshot>? StateChanged;
 
@@ -24,6 +26,8 @@ public sealed class ServerConnectionService : IDisposable
     {
         Stop();
 
+        _lastPublishedState = null;
+        _lastPublishedText = null;
         _connectionCts = new CancellationTokenSource();
         _ = RunConnectionLoopAsync(settings, authorizationToken, _connectionCts.Token);
     }
@@ -108,6 +112,12 @@ public sealed class ServerConnectionService : IDisposable
         TimeSpan? reconnectDelay)
     {
         StateChanged?.Invoke(new ServerConnectionSnapshot(state, text, isConnected, reconnectDelay));
+        if (_lastPublishedState != state || _lastPublishedText != text)
+        {
+            AppLogger.Info($"Server connection update: {state}; {text}");
+            _lastPublishedState = state;
+            _lastPublishedText = text;
+        }
     }
 }
 
